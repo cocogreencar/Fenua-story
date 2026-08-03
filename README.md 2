@@ -1,0 +1,39 @@
+# Interactive Map Web Application (React + Vite)
+
+This project is a React-based interactive map application built with **Vite**, **Mapbox**, and **Firebase**.  
+It supports multilingual content (EN / FR), map markers with popups, audio guides, and an admin panel for managing locations.
+
+This contains **all source files except `node_modules`**.
+
+---
+
+## Prerequisites
+
+Before starting, make sure you have the following installed:
+
+- **Node.js** (v18 or newer recommended)
+- **npm** (comes with Node.js)
+- A **Mapbox access token**
+- A **Firebase project** (Firestore + Storage)
+
+---
+
+## Project Setup
+
+### 1. Install dependencies
+
+From the project root directory, run:
+
+- _npm install_
+
+### 2. Running the Project (Development)
+
+- _npm run dev_
+
+## Project Confugurations
+
+Environment Variables (.env)
+
+This project uses environment variables to manage sensitive keys and configuration.
+
+Create a .env file in the project root directory and add the required keys.

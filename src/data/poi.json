@@ -1,0 +1,19 @@
+{
+  "title": {
+    "en": "Belvedere Lookout",
+    "fr": "Belvédère"
+  },
+  "text": {
+    "en": "Description...",
+    "fr": "Description..."
+  },
+  "location": {
+    "lat": -17.523,
+    "lng": -149.842
+  },
+  "category": "viewpoint",
+  "audio": {
+    "en": "url",
+    "fr": "url"
+  }
+}

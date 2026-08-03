@@ -1,0 +1,14 @@
+/* Hide logo & legend on mobile screens */
+@media (max-width: 768px) {
+  .logo-container,
+  .legend-container {
+    display: none !important;
+  }
+}
+
+
+.map-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+}
