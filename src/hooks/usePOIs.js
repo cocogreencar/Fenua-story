@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../services/firebaseConfig";
+import { detectIslandByLocation } from "../data/islands";
 
 export default function usePOIs(islandId) {
   const [pois, setPois] = useState([]);
@@ -19,7 +20,11 @@ export default function usePOIs(islandId) {
           .filter((poi) => {
             if (!islandId) return true;
             if (poi.island) return poi.island === islandId;
-            return islandId === "moorea";
+            const detected = detectIslandByLocation(
+              poi.location?.lat,
+              poi.location?.lng
+            );
+            return detected === islandId;
           });
         setPois(list);
         setLoading(false);

@@ -35,3 +35,23 @@ export const islands = [
 ];
 
 export const getIslandById = (id) => islands.find((i) => i.id === id);
+
+const islandBounds = {
+  moorea: { lngMin: -149.95, lngMax: -149.75, latMin: -17.65, latMax: -17.45 },
+  tahiti: { lngMin: -149.75, lngMax: -149.35, latMin: -17.85, latMax: -17.45 },
+  "bora-bora": { lngMin: -151.85, lngMax: -151.55, latMin: -16.6, latMax: -16.4 },
+};
+
+export function detectIslandByLocation(lat, lng) {
+  for (const [id, b] of Object.entries(islandBounds)) {
+    if (
+      lat >= b.latMin &&
+      lat <= b.latMax &&
+      lng >= b.lngMin &&
+      lng <= b.lngMax
+    ) {
+      return id;
+    }
+  }
+  return null;
+}
