@@ -1,14 +1,54 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Typography, Card, CardMedia, CardContent, Fade } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Card,
+  CardMedia,
+  CardContent,
+  Fade,
+  Chip,
+  IconButton,
+  CircularProgress,
+} from "@mui/material";
+import DownloadOutlined from "@mui/icons-material/DownloadOutlined";
+import CheckCircle from "@mui/icons-material/CheckCircle";
+import ErrorOutline from "@mui/icons-material/ErrorOutline";
 import { useLanguage } from "../context/LanguageContext";
 import { islands } from "../data/islands";
 import BottomNav from "../components/BottomNav";
+import {
+  isIslandDownloaded,
+  downloadIsland,
+} from "../services/offlineStorage";
 
 export default function IslandSelection() {
   const navigate = useNavigate();
   const { lang } = useLanguage();
   const [hoveredId, setHoveredId] = useState(null);
+  const [downloadStates, setDownloadStates] = useState({});
+
+  useEffect(() => {
+    islands.forEach(async (island) => {
+      const downloaded = await isIslandDownloaded(island.id);
+      setDownloadStates((prev) => ({
+        ...prev,
+        [island.id]: downloaded ? "downloaded" : "idle",
+      }));
+    });
+  }, []);
+
+  const handleDownload = async (e, islandId) => {
+    e.stopPropagation();
+    setDownloadStates((prev) => ({ ...prev, [islandId]: "downloading" }));
+    try {
+      await downloadIsland(islandId);
+      setDownloadStates((prev) => ({ ...prev, [islandId]: "downloaded" }));
+    } catch (err) {
+      console.error(`Download failed for ${islandId}:`, err);
+      setDownloadStates((prev) => ({ ...prev, [islandId]: "error" }));
+    }
+  };
 
   const handleSelect = (island) => {
     navigate(`/map/${island.id}`);
@@ -129,6 +169,86 @@ export default function IslandSelection() {
                   pointerEvents: "none",
                 }}
               />
+
+              {/* Offline download control */}
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 10,
+                  right: 10,
+                  zIndex: 10,
+                }}
+              >
+                {downloadStates[island.id] === "downloading" && (
+                  <Chip
+                    size="small"
+                    label={
+                      lang === "fr" ? "Téléchargement..." : "Downloading..."
+                    }
+                    sx={{
+                      bgcolor: "rgba(0,0,0,0.6)",
+                      color: "#fff",
+                      fontSize: { xs: "0.65rem", sm: "0.75rem" },
+                      height: { xs: 24, sm: 28 },
+                      backdropFilter: "blur(4px)",
+                    }}
+                    icon={
+                      <CircularProgress
+                        size={14}
+                        sx={{ color: "#fff", ml: 0.5 }}
+                      />
+                    }
+                  />
+                )}
+                {downloadStates[island.id] === "downloaded" && (
+                  <Chip
+                    size="small"
+                    icon={<CheckCircle sx={{ fontSize: 16 }} />}
+                    label={lang === "fr" ? "Hors ligne" : "Available offline"}
+                    sx={{
+                      bgcolor: "rgba(46,125,50,0.85)",
+                      color: "#fff",
+                      fontSize: { xs: "0.65rem", sm: "0.75rem" },
+                      height: { xs: 24, sm: 28 },
+                      "& .MuiChip-icon": { color: "#fff" },
+                      backdropFilter: "blur(4px)",
+                    }}
+                  />
+                )}
+                {downloadStates[island.id] === "error" && (
+                  <Chip
+                    size="small"
+                    icon={<ErrorOutline sx={{ fontSize: 16 }} />}
+                    label={lang === "fr" ? "Échec — réessayer" : "Failed — retry"}
+                    onClick={(e) => handleDownload(e, island.id)}
+                    clickable
+                    sx={{
+                      bgcolor: "rgba(198,40,40,0.85)",
+                      color: "#fff",
+                      fontSize: { xs: "0.6rem", sm: "0.7rem" },
+                      height: { xs: 24, sm: 28 },
+                      "& .MuiChip-icon": { color: "#fff" },
+                      backdropFilter: "blur(4px)",
+                    }}
+                  />
+                )}
+                {downloadStates[island.id] === "idle" && (
+                  <IconButton
+                    size="small"
+                    onClick={(e) => handleDownload(e, island.id)}
+                    sx={{
+                      bgcolor: "rgba(0,0,0,0.5)",
+                      color: "#fff",
+                      width: { xs: 28, sm: 32 },
+                      height: { xs: 28, sm: 32 },
+                      backdropFilter: "blur(4px)",
+                      "&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
+                    }}
+                  >
+                    <DownloadOutlined sx={{ fontSize: { xs: 16, sm: 18 } }} />
+                  </IconButton>
+                )}
+              </Box>
 
               <CardContent
                 sx={{
