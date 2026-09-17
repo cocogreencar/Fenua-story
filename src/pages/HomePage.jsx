@@ -1,13 +1,17 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import MapView from "../components/MapView";
 import { useLanguage } from "../context/LanguageContext";
 import LanguageSwitch from "../components/LanguageSwitch";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { getIslandById } from "../data/islands";
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const { islandId } = useParams();
   const { lang } = useLanguage(); // ← get current language ("en" | "fr")
+
+  const island = getIslandById(islandId) || getIslandById("moorea");
 
   const Icons = {
     "Point of interest": "/icons/m1-01.svg",
@@ -117,7 +121,7 @@ const HomePage = () => {
       </div>
 
       <LanguageSwitch />
-      <MapView lang={lang} />
+      <MapView lang={lang} island={island} />
     </div>
   );
 };

@@ -16,7 +16,7 @@ export default function App() {
       <CssBaseline />
       <Routes>
         <Route path="/" element={<IslandSelection />} />
-        <Route path="/map" element={<HomePage />} />
+        <Route path="/map/:islandId" element={<HomePage />} />
 
         <Route path="/admin-login" element={<AdminLogin />} />
 

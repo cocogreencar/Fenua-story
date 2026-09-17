@@ -5,12 +5,12 @@ import usePOIs from "../hooks/usePOIs";
 import PopupContent from "./PopupContent";
 import ReactDOM from "react-dom/client";
 
-export default function MapView({ lang }) {
+export default function MapView({ lang, island }) {
   const mapContainer = useRef(null);
   const map = useRef(null);
   const markersRef = useRef([]);
 
-  const { pois, loading } = usePOIs();
+  const { pois, loading } = usePOIs(island?.id);
 
   const categoryIcons = {
     "Point of interest": "/icons/m1-01.svg",
@@ -21,14 +21,15 @@ export default function MapView({ lang }) {
   // Initialize Map
   useEffect(() => {
     if (map.current) return;
+    if (!island) return;
 
     mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: "mapbox://styles/mapbox/outdoors-v12",
-      center: [-149.842, -17.535],
-      zoom: 11,
+      center: island.center,
+      zoom: island.zoom,
     });
 
     // 🔹 Zoom + rotation controls

@@ -1,31 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Typography, Card, CardMedia, CardContent, Chip, Fade } from "@mui/material";
+import { Box, Typography, Card, CardMedia, CardContent, Fade } from "@mui/material";
 import { useLanguage } from "../context/LanguageContext";
-
-const islands = [
-  {
-    id: "tahiti",
-    name: { en: "Tahiti", fr: "Tahiti" },
-    tagline: { en: "The heart of French Polynesia", fr: "Le cœur de la Polynésie" },
-    image: "https://images.pexels.com/photos/33980508/pexels-photo-33980508.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
-    active: false,
-  },
-  {
-    id: "moorea",
-    name: { en: "Moorea", fr: "Moorea" },
-    tagline: { en: "The magical island", fr: "L'île magique" },
-    image: "https://images.pexels.com/photos/5034190/pexels-photo-5034190.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
-    active: true,
-  },
-  {
-    id: "borabora",
-    name: { en: "Bora Bora", fr: "Bora Bora" },
-    tagline: { en: "The pearl of the Pacific", fr: "La perle du Pacifique" },
-    image: "https://images.pexels.com/photos/27272195/pexels-photo-27272195.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
-    active: false,
-  },
-];
+import { islands } from "../data/islands";
 
 export default function IslandSelection() {
   const navigate = useNavigate();
@@ -33,9 +10,7 @@ export default function IslandSelection() {
   const [hoveredId, setHoveredId] = useState(null);
 
   const handleSelect = (island) => {
-    if (island.active) {
-      navigate("/map");
-    }
+    navigate(`/map/${island.id}`);
   };
 
   return (
@@ -47,40 +22,46 @@ export default function IslandSelection() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
-        py: 6,
-        px: 3,
+        py: { xs: 3, sm: 6 },
+        px: { xs: 2, sm: 3 },
       }}
     >
-      {/* Title */}
-      <Fade in timeout={800}>
-        <Box sx={{ textAlign: "center", mb: 6 }}>
-          <Typography
-            variant="h3"
-            sx={{
-              fontWeight: 700,
-              color: "#ffffff",
-              letterSpacing: 2,
-              mb: 1,
-              fontSize: { xs: "1.8rem", sm: "2.5rem", md: "3rem" },
+      {/* Logo */}
+      <Fade in timeout={600}>
+        <Box
+          sx={{
+            textAlign: "center",
+            mb: { xs: 2, sm: 4 },
+            mt: { xs: 1, sm: 2 },
+          }}
+        >
+          <img
+            src="/logo_2.3.png"
+            alt="Fenua Stories"
+            style={{
+              height: { xs: "100px", sm: "140px" },
+              maxHeight: "140px",
+              objectFit: "contain",
+              borderRadius: "12px",
             }}
-          >
-            Fenua Stories
-          </Typography>
-          <Typography
-            variant="subtitle1"
-            sx={{
-              color: "rgba(255,255,255,0.6)",
-              letterSpacing: 1,
-              fontWeight: 300,
-              fontSize: { xs: "0.85rem", sm: "1rem" },
-            }}
-          >
-            {lang === "fr"
-              ? "Choisissez votre île"
-              : "Choose your island"}
-          </Typography>
+          />
         </Box>
+      </Fade>
+
+      {/* Subtitle */}
+      <Fade in timeout={800}>
+        <Typography
+          sx={{
+            color: "rgba(255,255,255,0.7)",
+            letterSpacing: 1.5,
+            fontWeight: 300,
+            fontSize: { xs: "0.95rem", sm: "1.1rem" },
+            mb: { xs: 3, sm: 5 },
+            textAlign: "center",
+          }}
+        >
+          {lang === "fr" ? "Choisissez votre île" : "Choose your island"}
+        </Typography>
       </Fade>
 
       {/* Island cards */}
@@ -88,10 +69,11 @@ export default function IslandSelection() {
         sx={{
           display: "flex",
           flexDirection: { xs: "column", md: "row" },
-          gap: 4,
+          gap: { xs: 2.5, md: 4 },
           maxWidth: 1100,
           width: "100%",
           justifyContent: "center",
+          pb: 4,
         }}
       >
         {islands.map((island, idx) => (
@@ -101,36 +83,36 @@ export default function IslandSelection() {
               onMouseEnter={() => setHoveredId(island.id)}
               onMouseLeave={() => setHoveredId(null)}
               sx={{
-                width: { xs: "100%", sm: 320 },
+                width: { xs: "100%", sm: 340 },
+                minWidth: { xs: "100%", sm: 300 },
                 borderRadius: 4,
                 overflow: "hidden",
-                cursor: island.active ? "pointer" : "default",
+                cursor: "pointer",
                 position: "relative",
-                transition: "transform 0.35s cubic-bezier(0.4,0,0.2,1), box-shadow 0.35s ease",
+                transition:
+                  "transform 0.35s cubic-bezier(0.4,0,0.2,1), box-shadow 0.35s ease",
                 transform:
-                  hoveredId === island.id && island.active
+                  hoveredId === island.id
                     ? "translateY(-12px) scale(1.02)"
                     : "translateY(0) scale(1)",
                 boxShadow:
-                  hoveredId === island.id && island.active
+                  hoveredId === island.id
                     ? "0 20px 50px rgba(0,0,0,0.5), 0 0 0 2px rgba(100,180,255,0.3)"
                     : "0 8px 24px rgba(0,0,0,0.3)",
-                opacity: island.active ? 1 : 0.55,
-                filter: island.active ? "none" : "grayscale(0.4)",
-                "&:active": island.active
-                  ? { transform: "translateY(-6px) scale(1.01)" }
-                  : {},
+                "&:active": {
+                  transform: "translateY(-6px) scale(1.01)",
+                },
               }}
             >
               <CardMedia
                 component="img"
-                height="240"
-                image={island.image}
-                alt={island.name[lang]}
                 sx={{
+                  height: { xs: 220, sm: 260 },
                   transition: "transform 0.5s ease",
                   transform: hoveredId === island.id ? "scale(1.08)" : "scale(1)",
                 }}
+                image={island.image}
+                alt={island.name[lang]}
               />
 
               {/* Gradient overlay */}
@@ -147,31 +129,13 @@ export default function IslandSelection() {
                 }}
               />
 
-              {/* Status badge */}
-              {!island.active && (
-                <Chip
-                  label={lang === "fr" ? "Bientôt" : "Coming soon"}
-                  size="small"
-                  sx={{
-                    position: "absolute",
-                    top: 12,
-                    right: 12,
-                    backgroundColor: "rgba(0,0,0,0.6)",
-                    color: "rgba(255,255,255,0.8)",
-                    fontWeight: 500,
-                    fontSize: "0.7rem",
-                    backdropFilter: "blur(4px)",
-                  }}
-                />
-              )}
-
               <CardContent
                 sx={{
                   position: "absolute",
                   bottom: 0,
                   left: 0,
                   right: 0,
-                  pb: 3,
+                  pb: { xs: 2.5, sm: 3 },
                   px: 3,
                 }}
               >
