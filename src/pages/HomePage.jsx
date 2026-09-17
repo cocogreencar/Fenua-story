@@ -1,9 +1,12 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import MapView from "../components/MapView";
 import { useLanguage } from "../context/LanguageContext";
 import LanguageSwitch from "../components/LanguageSwitch";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 const HomePage = () => {
+  const navigate = useNavigate();
   const { lang } = useLanguage(); // ← get current language ("en" | "fr")
 
   const Icons = {
@@ -39,6 +42,39 @@ const HomePage = () => {
           className="logo-image"
         />
       </div>
+
+      {/* Back to island selection */}
+      <button
+        onClick={() => navigate("/")}
+        style={{
+          position: "absolute",
+          top: 20,
+          left: 180,
+          zIndex: 9999,
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          padding: "8px 14px",
+          border: "1px solid rgba(255,255,255,0.25)",
+          borderRadius: "20px",
+          background: "rgba(255,255,255,0.12)",
+          backdropFilter: "blur(8px)",
+          color: "#fff",
+          fontSize: 13,
+          fontWeight: 500,
+          cursor: "pointer",
+          transition: "background 0.2s ease",
+        }}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.background = "rgba(255,255,255,0.22)")
+        }
+        onMouseLeave={(e) =>
+          (e.currentTarget.style.background = "rgba(255,255,255,0.12)")
+        }
+      >
+        <ArrowBackIcon sx={{ fontSize: 16 }} />
+        {lang === "fr" ? "Îles" : "Islands"}
+      </button>
 
       {/* LEGEND BOX */}
       <div

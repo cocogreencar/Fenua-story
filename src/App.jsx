@@ -3,6 +3,7 @@ import { Container, CssBaseline } from "@mui/material";
 import { Routes, Route } from "react-router-dom";
 import AdminPage from "./pages/AdminPage";
 import HomePage from "./pages/HomePage";
+import IslandSelection from "./pages/IslandSelection";
 import LocationsList from "./pages/LocationsList";
 import EditLocations from "./pages/EditLocations";
 import "./App.css";
@@ -14,7 +15,8 @@ export default function App() {
     <>
       <CssBaseline />
       <Routes>
-        <Route path="/" element={<HomePage />} />
+        <Route path="/" element={<IslandSelection />} />
+        <Route path="/map" element={<HomePage />} />
 
         <Route path="/admin-login" element={<AdminLogin />} />
 
