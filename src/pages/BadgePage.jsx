@@ -21,13 +21,13 @@ export default function BadgePage() {
     >
       {/* Logo */}
       <Fade in timeout={600}>
-        <Box sx={{ textAlign: "center", mb: 4 }}>
+        <Box sx={{ textAlign: "center", mb: 3 }}>
           <img
             src="/logo_2.3.png"
             alt="Fenua Stories"
             style={{
-              height: "100px",
-              maxHeight: "120px",
+              height: "90px",
+              maxHeight: "110px",
               objectFit: "contain",
               borderRadius: "12px",
             }}
@@ -41,9 +41,9 @@ export default function BadgePage() {
           sx={{
             color: "#ffffff",
             fontWeight: 700,
-            fontSize: { xs: "1.4rem", sm: "1.8rem" },
+            fontSize: { xs: "1.3rem", sm: "1.7rem" },
             textAlign: "center",
-            mb: 1,
+            mb: 1.5,
             letterSpacing: 0.5,
           }}
         >
@@ -51,130 +51,50 @@ export default function BadgePage() {
         </Typography>
       </Fade>
 
-      {/* Subtitle */}
+      {/* Explanation */}
       <Fade in timeout={900}>
         <Typography
           sx={{
             color: "rgba(255,255,255,0.6)",
             fontWeight: 300,
-            fontSize: { xs: "0.9rem", sm: "1rem" },
+            fontSize: { xs: "0.85rem", sm: "0.95rem" },
             textAlign: "center",
-            mb: 5,
-            maxWidth: 420,
+            mb: 4,
+            maxWidth: 400,
             lineHeight: 1.5,
           }}
         >
           {lang === "fr"
-            ? "Présentez votre badge chez nos partenaires et profitez d'avantages exclusifs."
-            : "Show your badge at participating partners and enjoy exclusive benefits."}
+            ? "Présentez ce badge chez nos partenaires pour profiter de vos avantages exclusifs."
+            : "Show this badge at participating partners to enjoy your exclusive benefits."}
         </Typography>
       </Fade>
 
-      {/* Digital badge */}
+      {/* Official badge image */}
       <Fade in timeout={1000}>
         <Box
           sx={{
-            width: { xs: "100%", sm: 380 },
-            maxWidth: 380,
-            borderRadius: 5,
-            overflow: "hidden",
-            position: "relative",
-            background: "linear-gradient(135deg, #0d2845 0%, #103a5c 50%, #0a1929 100%)",
-            border: "2px solid rgba(100,180,255,0.25)",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.4), inset 0 0 40px rgba(100,180,255,0.05)",
-            p: { xs: 3, sm: 4 },
-            mb: 4,
+            width: { xs: "100%", sm: "auto" },
+            maxWidth: { xs: 420, sm: 500 },
+            display: "flex",
+            justifyContent: "center",
           }}
         >
-          {/* Decorative top accent */}
-          <Box
-            sx={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 4,
-              background: "linear-gradient(90deg, #64b5f6, #42a5f5, #1e88e5, #64b5f6)",
-            }}
-          />
-
-          {/* Badge inner content */}
-          <Box sx={{ textAlign: "center", py: 2 }}>
-            <img
-              src="/logo_2.3.png"
-              alt="Fenua Stories"
-              style={{
-                height: 80,
-                objectFit: "contain",
-                borderRadius: "8px",
-                marginBottom: 16,
-              }}
-            />
-            <Typography
-              sx={{
-                color: "#ffffff",
-                fontWeight: 700,
-                fontSize: "1.3rem",
-                letterSpacing: 1,
-                mb: 0.5,
-              }}
-            >
-              FENUA STORIES
-            </Typography>
-            <Typography
-              sx={{
-                color: "rgba(100,180,255,0.8)",
-                fontWeight: 500,
-                fontSize: "0.75rem",
-                letterSpacing: 3,
-                textTransform: "uppercase",
-                mb: 2,
-              }}
-            >
-              {lang === "fr" ? "Badge Voyageur" : "Traveler Pass"}
-            </Typography>
-
-            {/* Decorative divider */}
-            <Box
-              sx={{
-                width: "60%",
-                height: 1,
-                mx: "auto",
-                my: 2,
-                background: "linear-gradient(90deg, transparent, rgba(100,180,255,0.3), transparent)",
-              }}
-            />
-
-            <Typography
-              sx={{
-                color: "rgba(255,255,255,0.5)",
-                fontSize: "0.75rem",
-                fontWeight: 300,
-                letterSpacing: 0.5,
-              }}
-            >
-              {lang === "fr"
-                ? "Présentez ce badge à nos partenaires"
-                : "Present this badge to our partners"}
-            </Typography>
-          </Box>
-
-          {/* Decorative bottom accent */}
-          <Box
-            sx={{
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: 4,
-              background: "linear-gradient(90deg, #64b5f6, #42a5f5, #1e88e5, #64b5f6)",
+          <img
+            src="/icons/badge-avantage-actif.png"
+            alt="Fenua Stories Badge"
+            style={{
+              width: "100%",
+              maxWidth: 480,
+              height: "auto",
+              objectFit: "contain",
             }}
           />
         </Box>
       </Fade>
 
       {/* Placeholder for future partner offers */}
-      <Box sx={{ width: "100%", maxWidth: 420, mt: 2 }}>
+      <Box sx={{ width: "100%", maxWidth: 420, mt: 4 }}>
         <Typography
           sx={{
             color: "rgba(255,255,255,0.3)",
