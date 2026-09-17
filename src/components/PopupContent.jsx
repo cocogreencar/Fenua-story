@@ -10,6 +10,7 @@ import {
   IconButton,
 } from "@mui/material";
 import { useState, useEffect } from "react";
+import { Capacitor } from "@capacitor/core";
 import AudioPlayer from "./AudioPlayer";
 import { ref, getDownloadURL } from "firebase/storage";
 import { storage } from "../services/firebaseConfig";
@@ -30,13 +31,18 @@ export default function PopupContent({ poi, lang, onClose }) {
   const shortText =
     fullText.length > maxChars ? fullText.slice(0, maxChars) + "..." : fullText;
 
-  // Load image and audio from Firebase
+  // Load image and audio: prefer local offline files, fall back to Firebase
   useEffect(() => {
-    if (poi.imgUrl) {
+    if (poi.localImage) {
+      setImageUrl(Capacitor.convertFileSrc(poi.localImage));
+    } else if (poi.imgUrl) {
       const imageRef = ref(storage, poi.imgUrl);
       getDownloadURL(imageRef).then(setImageUrl);
     }
-    if (poi.audio?.[lang]) {
+
+    if (poi.localAudio?.[lang]) {
+      setAudioUrl(Capacitor.convertFileSrc(poi.localAudio[lang]));
+    } else if (poi.audio?.[lang]) {
       const audioRef = ref(storage, poi.audio?.[lang]);
       getDownloadURL(audioRef).then(setAudioUrl);
     }

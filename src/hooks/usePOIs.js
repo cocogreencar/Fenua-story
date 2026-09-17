@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../services/firebaseConfig";
 import { detectIslandByLocation } from "../data/islands";
+import { readIslandManifest } from "../services/offlineStorage";
 
 export default function usePOIs(islandId) {
   const [pois, setPois] = useState([]);
@@ -29,9 +30,22 @@ export default function usePOIs(islandId) {
         setPois(list);
         setLoading(false);
       },
-      (err) => {
+      async (err) => {
         console.error("Error fetching POIs:", err);
         setError(err);
+        // Offline fallback: load from downloaded manifest
+        if (islandId) {
+          const manifest = await readIslandManifest(islandId);
+          if (manifest?.pois) {
+            const list = manifest.pois.map((entry) => ({
+              id: entry.id,
+              ...entry.data,
+              localImage: entry.localImage,
+              localAudio: entry.localAudio,
+            }));
+            setPois(list);
+          }
+        }
         setLoading(false);
       }
     );
