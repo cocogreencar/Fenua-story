@@ -15,13 +15,13 @@ export default function BadgePage() {
         flexDirection: "column",
         alignItems: "center",
         px: { xs: 3, sm: 4 },
-        pt: { xs: 4, sm: 6 },
+        pt: { xs: 2, sm: 4 },
         pb: { xs: 10, sm: 10 },
       }}
     >
       {/* Logo */}
       <Fade in timeout={600}>
-        <Box sx={{ textAlign: "center", mb: 3 }}>
+        <Box sx={{ textAlign: "center", mb: 2 }}>
           <img
             src="/logo_2.3.png"
             alt="Fenua Stories"
@@ -43,7 +43,7 @@ export default function BadgePage() {
             fontWeight: 700,
             fontSize: { xs: "1.3rem", sm: "1.7rem" },
             textAlign: "center",
-            mb: 1.5,
+            mb: 1,
             letterSpacing: 0.5,
           }}
         >
@@ -59,7 +59,7 @@ export default function BadgePage() {
             fontWeight: 300,
             fontSize: { xs: "0.85rem", sm: "0.95rem" },
             textAlign: "center",
-            mb: 4,
+            mb: 2,
             maxWidth: 400,
             lineHeight: 1.5,
           }}
@@ -92,23 +92,6 @@ export default function BadgePage() {
           />
         </Box>
       </Fade>
-
-      {/* Placeholder for future partner offers */}
-      <Box sx={{ width: "100%", maxWidth: 420, mt: 4 }}>
-        <Typography
-          sx={{
-            color: "rgba(255,255,255,0.3)",
-            fontSize: "0.8rem",
-            fontWeight: 300,
-            textAlign: "center",
-            fontStyle: "italic",
-          }}
-        >
-          {lang === "fr"
-            ? "Les offres partenaires arrivent bientôt"
-            : "Partner offers coming soon"}
-        </Typography>
-      </Box>
 
       <BottomNav />
     </Box>
