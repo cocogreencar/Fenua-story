@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Box, Typography, Card, CardMedia, CardContent, Fade } from "@mui/material";
 import { useLanguage } from "../context/LanguageContext";
 import { islands } from "../data/islands";
+import BottomNav from "../components/BottomNav";
 
 export default function IslandSelection() {
   const navigate = useNavigate();
@@ -22,8 +23,9 @@ export default function IslandSelection() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        py: { xs: 3, sm: 6 },
+        py: { xs: 2.5, sm: 6 },
         px: { xs: 2, sm: 3 },
+        pb: { xs: 10, sm: 10 },
       }}
     >
       {/* Logo */}
@@ -31,7 +33,7 @@ export default function IslandSelection() {
         <Box
           sx={{
             textAlign: "center",
-            mb: { xs: 2, sm: 4 },
+            mb: { xs: 1.5, sm: 4 },
             mt: { xs: 1, sm: 2 },
           }}
         >
@@ -39,8 +41,8 @@ export default function IslandSelection() {
             src="/logo_2.3.png"
             alt="Fenua Stories"
             style={{
-              height: { xs: "100px", sm: "140px" },
-              maxHeight: "140px",
+              height: "100px",
+              maxHeight: "120px",
               objectFit: "contain",
               borderRadius: "12px",
             }}
@@ -56,7 +58,7 @@ export default function IslandSelection() {
             letterSpacing: 1.5,
             fontWeight: 300,
             fontSize: { xs: "0.95rem", sm: "1.1rem" },
-            mb: { xs: 3, sm: 5 },
+            mb: { xs: 2.5, sm: 5 },
             textAlign: "center",
           }}
         >
@@ -69,11 +71,10 @@ export default function IslandSelection() {
         sx={{
           display: "flex",
           flexDirection: { xs: "column", md: "row" },
-          gap: { xs: 2.5, md: 4 },
+          gap: { xs: 2, md: 4 },
           maxWidth: 1100,
           width: "100%",
           justifyContent: "center",
-          pb: 4,
         }}
       >
         {islands.map((island, idx) => (
@@ -107,7 +108,7 @@ export default function IslandSelection() {
               <CardMedia
                 component="img"
                 sx={{
-                  height: { xs: 220, sm: 260 },
+                  height: { xs: 180, sm: 260 },
                   transition: "transform 0.5s ease",
                   transform: hoveredId === island.id ? "scale(1.08)" : "scale(1)",
                 }}
@@ -135,7 +136,7 @@ export default function IslandSelection() {
                   bottom: 0,
                   left: 0,
                   right: 0,
-                  pb: { xs: 2.5, sm: 3 },
+                  pb: { xs: 2, sm: 3 },
                   px: 3,
                 }}
               >
@@ -165,6 +166,8 @@ export default function IslandSelection() {
           </Fade>
         ))}
       </Box>
+
+      <BottomNav />
     </Box>
   );
 }
