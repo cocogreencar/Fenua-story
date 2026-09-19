@@ -117,7 +117,7 @@ const HomePage = () => {
             "&:hover": { bgcolor: "rgba(255, 255, 255, 0.5)" },
           }}
         >
-          {legendOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          {legendOpen ? <ExpandMoreIcon /> : <ExpandLessIcon />}
         </IconButton>
       </Box>
 

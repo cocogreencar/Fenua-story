@@ -5,6 +5,7 @@ import usePOIs from "../hooks/usePOIs";
 import PopupContent from "./PopupContent";
 import ReactDOM from "react-dom/client";
 import { readIslandManifest, getOfflineMapStyle } from "../services/offlineStorage";
+import { islandBounds } from "../data/islands";
 
 export default function MapView({ lang, island }) {
   const mapContainer = useRef(null);
@@ -54,6 +55,20 @@ export default function MapView({ lang, island }) {
       style,
       center: island.center,
       zoom: island.zoom,
+    });
+
+    // Fit map to island bounds on initial load
+    map.current.on("load", () => {
+      const bounds = islandBounds[island.id];
+      if (bounds) {
+        map.current.fitBounds(
+          [
+            [bounds.lngMin, bounds.latMin],
+            [bounds.lngMax, bounds.latMax],
+          ],
+          { padding: { top: 80, bottom: 80, left: 40, right: 40 }, duration: 0 }
+        );
+      }
     });
 
     // 🔹 Zoom + rotation controls
