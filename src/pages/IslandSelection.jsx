@@ -10,6 +10,7 @@ import {
   Chip,
   IconButton,
   CircularProgress,
+  Tooltip,
 } from "@mui/material";
 import DownloadOutlined from "@mui/icons-material/DownloadOutlined";
 import CheckCircle from "@mui/icons-material/CheckCircle";
@@ -17,6 +18,7 @@ import ErrorOutline from "@mui/icons-material/ErrorOutline";
 import { useLanguage } from "../context/LanguageContext";
 import { islands } from "../data/islands";
 import BottomNav from "../components/BottomNav";
+import LanguageSwitch from "../components/LanguageSwitch";
 import {
   isIslandDownloaded,
   downloadIsland,
@@ -63,25 +65,29 @@ export default function IslandSelection() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        py: { xs: 2.5, sm: 6 },
+        py: { xs: 1.5, sm: 6 },
         px: { xs: 2, sm: 3 },
         pb: { xs: 10, sm: 10 },
       }}
     >
+      {/* Language selector */}
+      <LanguageSwitch />
+
       {/* Logo */}
       <Fade in timeout={600}>
         <Box
           sx={{
             textAlign: "center",
-            mb: { xs: 1.5, sm: 4 },
-            mt: { xs: 1, sm: 2 },
+            mb: { xs: 0.5, sm: 4 },
+            mt: { xs: 0.5, sm: 2 },
+            height: { xs: "70px", sm: "100px" },
           }}
         >
           <img
             src="/logo_2.3.png"
             alt="Fenua Stories"
             style={{
-              height: "100px",
+              height: "100%",
               maxHeight: "120px",
               objectFit: "contain",
               borderRadius: "12px",
@@ -97,8 +103,8 @@ export default function IslandSelection() {
             color: "rgba(255,255,255,0.7)",
             letterSpacing: 1.5,
             fontWeight: 300,
-            fontSize: { xs: "0.95rem", sm: "1.1rem" },
-            mb: { xs: 2.5, sm: 5 },
+            fontSize: { xs: "0.9rem", sm: "1.1rem" },
+            mb: { xs: 1.5, sm: 5 },
             textAlign: "center",
           }}
         >
@@ -111,7 +117,7 @@ export default function IslandSelection() {
         sx={{
           display: "flex",
           flexDirection: { xs: "column", md: "row" },
-          gap: { xs: 2, md: 4 },
+          gap: { xs: 1.5, md: 4 },
           maxWidth: 1100,
           width: "100%",
           justifyContent: "center",
@@ -148,7 +154,7 @@ export default function IslandSelection() {
               <CardMedia
                 component="img"
                 sx={{
-                  height: { xs: 180, sm: 260 },
+                  height: { xs: 150, sm: 260 },
                   transition: "transform 0.5s ease",
                   transform: hoveredId === island.id ? "scale(1.08)" : "scale(1)",
                 }}
@@ -233,20 +239,40 @@ export default function IslandSelection() {
                   />
                 )}
                 {downloadStates[island.id] === "idle" && (
-                  <IconButton
-                    size="small"
-                    onClick={(e) => handleDownload(e, island.id)}
-                    sx={{
-                      bgcolor: "rgba(0,0,0,0.5)",
-                      color: "#fff",
-                      width: { xs: 28, sm: 32 },
-                      height: { xs: 28, sm: 32 },
-                      backdropFilter: "blur(4px)",
-                      "&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
+                  <Tooltip
+                    title={
+                      lang === "fr"
+                        ? "Télécharger pour utiliser hors connexion"
+                        : "Download for offline use"
+                    }
+                    arrow
+                    slotProps={{
+                      tooltip: {
+                        sx: {
+                          fontSize: "0.75rem",
+                          bgcolor: "rgba(0,0,0,0.85)",
+                          "& .MuiTooltip-arrow": {
+                            color: "rgba(0,0,0,0.85)",
+                          },
+                        },
+                      },
                     }}
                   >
-                    <DownloadOutlined sx={{ fontSize: { xs: 16, sm: 18 } }} />
-                  </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => handleDownload(e, island.id)}
+                      sx={{
+                        bgcolor: "rgba(0,0,0,0.5)",
+                        color: "#fff",
+                        width: { xs: 28, sm: 32 },
+                        height: { xs: 28, sm: 32 },
+                        backdropFilter: "blur(4px)",
+                        "&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
+                      }}
+                    >
+                      <DownloadOutlined sx={{ fontSize: { xs: 16, sm: 18 } }} />
+                    </IconButton>
+                  </Tooltip>
                 )}
               </Box>
 
