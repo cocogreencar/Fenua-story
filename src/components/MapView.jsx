@@ -63,23 +63,11 @@ export default function MapView({ lang, island }) {
       if (!bounds) return;
 
       if (island.id === "tahiti") {
-        // Same zoom, shifted right so the whole island is visible
-        map.current.fitBounds(
-          [
-            [bounds.lngMin, bounds.latMin],
-            [bounds.lngMax, bounds.latMax],
-          ],
-          { padding: { top: 80, bottom: 80, left: 160, right: 40 }, duration: 0 }
-        );
+        // Explicit center shifted slightly east so the whole island is visible
+        map.current.jumpTo({ center: [-149.50, -17.62], zoom: 11 });
       } else if (island.id === "bora-bora") {
-        // Tighter display bounds — island + lagoon only, zoomed in
-        map.current.fitBounds(
-          [
-            [-151.78, -16.58],
-            [-151.62, -16.42],
-          ],
-          { padding: { top: 80, bottom: 80, left: 40, right: 40 }, duration: 0 }
-        );
+        // Same center, zoomed in ~1 level closer
+        map.current.jumpTo({ center: [-151.70, -16.50], zoom: 13 });
       } else {
         // Moorea and default — unchanged
         map.current.fitBounds(
