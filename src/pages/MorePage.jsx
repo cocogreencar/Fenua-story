@@ -1,11 +1,13 @@
 import { Box, Typography, Fade, ListItem, ListItemIcon, ListItemText, List, Divider } from "@mui/material";
 import LanguageIcon from "@mui/icons-material/Language";
 import InfoIcon from "@mui/icons-material/Info";
+import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 import BottomNav from "../components/BottomNav";
 
 export default function MorePage() {
   const { lang, toggleLang } = useLanguage();
+  const navigate = useNavigate();
 
   const entries = [
     {
@@ -18,7 +20,7 @@ export default function MorePage() {
       icon: <InfoIcon sx={{ color: "#64b5f6" }} />,
       label: lang === "fr" ? "À propos de Fenua Stories" : "About Fenua Stories",
       value: "",
-      onClick: null,
+      onClick: () => navigate("/about"),
     },
   ];
 

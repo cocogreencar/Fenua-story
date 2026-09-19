@@ -73,10 +73,11 @@ export default function IslandSelection() {
       {/* Language selector */}
       <LanguageSwitch />
 
-      {/* Logo */}
+      {/* Logo — centered relative to full screen width */}
       <Fade in timeout={600}>
         <Box
           sx={{
+            width: "100%",
             textAlign: "center",
             mb: { xs: 0.5, sm: 4 },
             mt: { xs: 0.5, sm: 2 },
