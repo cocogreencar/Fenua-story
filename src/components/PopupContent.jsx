@@ -53,7 +53,7 @@ export default function PopupContent({ poi, lang, onClose }) {
       {/* MAIN POPUP CARD */}
       <Card
         sx={{
-          width: isMobile ? 220 : 280,
+          width: isMobile ? 260 : 280,
           borderRadius: isMobile ? 2 : 3,
         }}
       >
@@ -127,7 +127,7 @@ export default function PopupContent({ poi, lang, onClose }) {
               sx={{ mt: 1, textTransform: "none" }}
               onClick={() => setDrawerOpen(true)}
             >
-              See more
+              {lang === "fr" ? "Lire la suite" : "Read more"}
             </Button>
           )}
         </CardContent>
@@ -155,6 +155,9 @@ export default function PopupContent({ poi, lang, onClose }) {
             zIndex: 3000, // above mapbox fullscreen
             borderTopLeftRadius: isMobile ? "16px" : 0,
             borderTopRightRadius: isMobile ? "16px" : 0,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
           },
         }}
       >
@@ -166,11 +169,19 @@ export default function PopupContent({ poi, lang, onClose }) {
           </IconButton>
         </Box>
 
-        {/* Content */}
-        <Typography
-          variant="body1"
-          dangerouslySetInnerHTML={{ __html: fullText }}
-        />
+        {/* Content — scrollable */}
+        <Box
+          sx={{
+            overflowY: "auto",
+            flex: 1,
+            WebkitOverflowScrolling: "touch",
+          }}
+        >
+          <Typography
+            variant="body1"
+            dangerouslySetInnerHTML={{ __html: fullText }}
+          />
+        </Box>
       </Drawer>
     </>
   );

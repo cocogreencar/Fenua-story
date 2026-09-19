@@ -1,126 +1,126 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { IconButton, Tooltip, Collapse, Box } from "@mui/material";
 import MapView from "../components/MapView";
 import { useLanguage } from "../context/LanguageContext";
-import LanguageSwitch from "../components/LanguageSwitch";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { getIslandById } from "../data/islands";
 
 const HomePage = () => {
   const navigate = useNavigate();
   const { islandId } = useParams();
-  const { lang } = useLanguage(); // ← get current language ("en" | "fr")
+  const { lang } = useLanguage();
+  const [legendOpen, setLegendOpen] = useState(false);
 
   const island = getIslandById(islandId) || getIslandById("moorea");
 
-  const Icons = {
-    "Point of interest": "/icons/m1-01.svg",
-    Restaurants: "/icons/m3-01.svg",
-    "Tourist activities": "/icons/m2-01.svg",
-  };
+  const legendItems = [
+    {
+      icon: "/icons/m1-01.svg",
+      label: lang === "fr" ? "Point d'intérêt" : "Point of interest",
+    },
+    {
+      icon: "/icons/m3-01.svg",
+      label: lang === "fr" ? "Restaurants" : "Restaurants",
+    },
+    {
+      icon: "/icons/m2-01.svg",
+      label: lang === "fr" ? "Activités touristiques" : "Tourist activities",
+    },
+  ];
 
   return (
     <div>
-      <div
-        className="logo-container"
-        style={{
-          position: "absolute",
-          top: 10,
-          left: 10,
-          zIndex: 9999,
-          backdropFilter: "blur(8px)",
-          background: "rgba(255, 255, 255, 0.1)",
-          borderRadius: "12px",
-        }}
+      {/* Back button — small circular arrow, top-left */}
+      <Tooltip
+        title={lang === "fr" ? "Retour aux îles" : "Back to islands"}
+        arrow
+        placement="right"
       >
-        <img
-          // src="/logo.png"
-          // src="/logo_2.1.svg"
-          src="/logo_2.3.png"
-          alt="Logo"
-          style={{
-            height: "150px",
-            objectFit: "contain",
-            borderRadius: "10px",
+        <IconButton
+          onClick={() => navigate("/")}
+          sx={{
+            position: "absolute",
+            top: 10,
+            left: 10,
+            zIndex: 9999,
+            width: 40,
+            height: 40,
+            bgcolor: "rgba(255,255,255,0.15)",
+            backdropFilter: "blur(8px)",
+            border: "1px solid rgba(255,255,255,0.25)",
+            color: "#fff",
+            "&:hover": { bgcolor: "rgba(255,255,255,0.25)" },
           }}
-          className="logo-image"
-        />
-      </div>
+        >
+          <ArrowBackIcon />
+        </IconButton>
+      </Tooltip>
 
-      {/* Back to island selection */}
-      <button
-        onClick={() => navigate("/")}
-        style={{
-          position: "absolute",
-          top: 20,
-          left: 180,
-          zIndex: 9999,
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          padding: "8px 14px",
-          border: "1px solid rgba(255,255,255,0.25)",
-          borderRadius: "20px",
-          background: "rgba(255,255,255,0.12)",
-          backdropFilter: "blur(8px)",
-          color: "#fff",
-          fontSize: 13,
-          fontWeight: 500,
-          cursor: "pointer",
-          transition: "background 0.2s ease",
-        }}
-        onMouseEnter={(e) =>
-          (e.currentTarget.style.background = "rgba(255,255,255,0.22)")
-        }
-        onMouseLeave={(e) =>
-          (e.currentTarget.style.background = "rgba(255,255,255,0.12)")
-        }
-      >
-        <ArrowBackIcon sx={{ fontSize: 16 }} />
-        {lang === "fr" ? "Îles" : "Islands"}
-      </button>
-
-      {/* LEGEND BOX */}
-      <div
-        className="legend-container"
-        style={{
+      {/* Collapsible legend — bottom-left, away from Mapbox controls (top-right) */}
+      <Box
+        sx={{
           position: "absolute",
           bottom: 30,
-          right: 10,
+          left: 10,
           zIndex: 1,
-          padding: "12px 16px",
-          background: "rgba(255, 255, 255, 0.35)",
-          backdropFilter: "blur(10px)",
-          borderRadius: "14px",
-          boxShadow: "0 4px 18px rgba(0,0,0,0.15)",
-          display: "flex",
-          flexDirection: "column",
-          gap: "10px",
-          fontFamily: "Inter, sans-serif",
-          border: "1px solid rgba(244, 167, 167, 0.5)",
+          maxWidth: { xs: 180, sm: 220 },
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <img src="/icons/m1-01.svg" style={{ width: 28, height: 28 }} />
-          <span style={{ fontSize: 14, fontWeight: 500 }}>
-            Point of interest
-          </span>
-        </div>
+        {legendOpen && (
+          <Collapse in={legendOpen} timeout="auto">
+            <Box
+              sx={{
+                p: 1.5,
+                background: "rgba(255, 255, 255, 0.35)",
+                backdropFilter: "blur(10px)",
+                borderRadius: "14px",
+                boxShadow: "0 4px 18px rgba(0,0,0,0.15)",
+                display: "flex",
+                flexDirection: "column",
+                gap: 1,
+                fontFamily: "Inter, sans-serif",
+                border: "1px solid rgba(244, 167, 167, 0.5)",
+                mb: 0.5,
+              }}
+            >
+              {legendItems.map((item, idx) => (
+                <Box
+                  key={idx}
+                  sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                >
+                  <img
+                    src={item.icon}
+                    alt=""
+                    style={{ width: 24, height: 24 }}
+                  />
+                  <span style={{ fontSize: 13, fontWeight: 500 }}>
+                    {item.label}
+                  </span>
+                </Box>
+              ))}
+            </Box>
+          </Collapse>
+        )}
+        <IconButton
+          onClick={() => setLegendOpen((prev) => !prev)}
+          sx={{
+            bgcolor: "rgba(255, 255, 255, 0.35)",
+            backdropFilter: "blur(10px)",
+            border: "1px solid rgba(244, 167, 167, 0.5)",
+            borderRadius: "14px",
+            color: "#333",
+            width: 36,
+            height: 36,
+            "&:hover": { bgcolor: "rgba(255, 255, 255, 0.5)" },
+          }}
+        >
+          {legendOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+        </IconButton>
+      </Box>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <img src="/icons/m3-01.svg" style={{ width: 28, height: 28 }} />
-          <span style={{ fontSize: 14, fontWeight: 500 }}>Restaurants</span>
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <img src="/icons/m2-01.svg" style={{ width: 28, height: 28 }} />
-          <span style={{ fontSize: 14, fontWeight: 500 }}>
-            Tourist activities
-          </span>
-        </div>
-      </div>
-
-      <LanguageSwitch />
       <MapView lang={lang} island={island} />
     </div>
   );
