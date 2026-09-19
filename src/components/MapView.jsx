@@ -1,22 +1,39 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import usePOIs from "../hooks/usePOIs";
 import PopupContent from "./PopupContent";
 import ReactDOM from "react-dom/client";
+import { readIslandManifest, getOfflineMapStyle } from "../services/offlineStorage";
 
 export default function MapView({ lang, island }) {
   const mapContainer = useRef(null);
   const map = useRef(null);
   const markersRef = useRef([]);
 
-  const { pois, loading } = usePOIs(island?.id);
+  const { pois, loading, error } = usePOIs(island?.id);
+  const [offlineMode, setOfflineMode] = useState(false);
+  const [hasTiles, setHasTiles] = useState(false);
 
   const categoryIcons = {
     "Point of interest": "/icons/m1-01.svg",
     Restaurants: "/icons/m3-01.svg",
     "Tourist activities": "/icons/m2-01.svg",
   };
+
+  // Detect offline state: if Firebase errored and we loaded from manifest
+  useEffect(() => {
+    if (!island?.id) return;
+    if (error) {
+      setOfflineMode(true);
+      readIslandManifest(island.id).then((manifest) => {
+        setHasTiles(!!manifest?.mapTiles);
+      });
+    } else {
+      setOfflineMode(false);
+      setHasTiles(false);
+    }
+  }, [error, island?.id]);
 
   // Initialize Map
   useEffect(() => {
@@ -25,9 +42,16 @@ export default function MapView({ lang, island }) {
 
     mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
+    // Determine style: online vector style, or offline raster tiles if available
+    let style = "mapbox://styles/mapbox/outdoors-v12";
+
+    // We'll check for offline tiles synchronously via a flag set by the detection effect.
+    // The map initializes with online style by default; if offline, the style swap
+    // happens in a separate effect below once hasTiles is confirmed.
+
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: "mapbox://styles/mapbox/outdoors-v12",
+      style,
       center: island.center,
       zoom: island.zoom,
     });
@@ -37,14 +61,6 @@ export default function MapView({ lang, island }) {
       new mapboxgl.NavigationControl({ visualizePitch: true }),
       "top-right"
     );
-
-    // 🔹 Fullscreen toggle
-    // map.current.addControl(
-    //   new mapboxgl.FullscreenControl({
-    //     container: document.body,
-    //   }),
-    //   "top-right"
-    // );
 
     // 🔹 User location (GPS)
     map.current.addControl(
@@ -58,6 +74,15 @@ export default function MapView({ lang, island }) {
       "top-right"
     );
   }, []);
+
+  // Switch to offline raster style when offline and tiles are available
+  useEffect(() => {
+    if (!map.current || !island?.id) return;
+    if (offlineMode && hasTiles) {
+      const offlineStyle = getOfflineMapStyle(island.id);
+      map.current.setStyle(offlineStyle);
+    }
+  }, [offlineMode, hasTiles, island?.id]);
 
   // Add markers with React popup
   useEffect(() => {
@@ -134,6 +159,38 @@ export default function MapView({ lang, island }) {
       markersRef.current.push(marker);
     });
   }, [pois, loading, lang]);
+
+  // Show message when offline and island not downloaded
+  if (offlineMode && !hasTiles && !loading) {
+    return (
+      <div
+        style={{
+          width: "100%",
+          height: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#0a1929",
+          borderRadius: "12px",
+          padding: "24px",
+        }}
+      >
+        <p
+          style={{
+            color: "rgba(255,255,255,0.8)",
+            fontSize: "1rem",
+            textAlign: "center",
+            maxWidth: "320px",
+            lineHeight: 1.6,
+          }}
+        >
+          {lang === "fr"
+            ? "Cette île n'est pas disponible hors ligne. Veuillez la télécharger depuis l'écran de sélection des îles lorsque vous êtes en ligne."
+            : "This island is not available offline. Please download it from the island selection screen while you are online."}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div

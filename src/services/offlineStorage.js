@@ -1,8 +1,12 @@
 import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
+import { Capacitor } from "@capacitor/core";
 import { collection, getDocs } from "firebase/firestore";
 import { ref, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../services/firebaseConfig";
-import { detectIslandByLocation } from "../data/islands";
+import { detectIslandByLocation, islandBounds } from "../data/islands";
+
+const TILE_MIN_ZOOM = 10;
+const TILE_MAX_ZOOM = 14;
 
 const MANIFEST_DIR = "fenua-offline";
 const MANIFEST_PREFIX = "manifest_";
@@ -13,6 +17,80 @@ function manifestPath(islandId) {
 
 function mediaDir(islandId) {
   return `${MANIFEST_DIR}/${islandId}`;
+}
+
+function tilesDir(islandId) {
+  return `${MANIFEST_DIR}/${islandId}/tiles`;
+}
+
+function tilePath(islandId, z, x, y) {
+  return `${tilesDir(islandId)}/${z}/${x}/${y}.png`;
+}
+
+function lngLatToTile(lat, lng, zoom) {
+  const n = Math.pow(2, zoom);
+  const x = Math.floor(((lng + 180) / 360) * n);
+  const y = Math.floor(
+    ((1 -
+      Math.log(
+        Math.tan((lat * Math.PI) / 180) +
+          1 / Math.cos((lat * Math.PI) / 180)
+      ) /
+        Math.PI) /
+      2) *
+      n
+  );
+  return { x, y };
+}
+
+function computeTileList(islandId) {
+  const bounds = islandBounds[islandId];
+  if (!bounds) return [];
+  const tiles = [];
+  for (let z = TILE_MIN_ZOOM; z <= TILE_MAX_ZOOM; z++) {
+    const minTileX = lngLatToTile(bounds.latMin, bounds.lngMin, z).x;
+    const maxTileX = lngLatToTile(bounds.latMin, bounds.lngMax, z).x;
+    const minTileY = lngLatToTile(bounds.latMax, bounds.lngMin, z).y;
+    const maxTileY = lngLatToTile(bounds.latMin, bounds.lngMax, z).y;
+    for (let x = minTileX; x <= maxTileX; x++) {
+      for (let y = minTileY; y <= maxTileY; y++) {
+        tiles.push({ z, x, y });
+      }
+    }
+  }
+  return tiles;
+}
+
+async function downloadTile(islandId, z, x, y, token) {
+  const url = `https://api.mapbox.com/v4/mapbox.satellite/${z}/${x}/${y}@2x.png?access_token=${token}`;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    const base64 = await blobToBase64(blob);
+    const path = tilePath(islandId, z, x, y);
+    await Filesystem.writeFile({
+      path,
+      data: base64,
+      directory: Directory.Data,
+      recursive: true,
+      encoding: Encoding.Base64,
+    });
+    return path;
+  } catch (e) {
+    console.warn(`Failed to download tile ${z}/${x}/${y}:`, e);
+    return null;
+  }
+}
+
+async function downloadMapTiles(islandId) {
+  const token = import.meta.env.VITE_MAPBOX_TOKEN;
+  if (!token) return null;
+  const tiles = computeTileList(islandId);
+  for (const t of tiles) {
+    await downloadTile(islandId, t.z, t.x, t.y, token);
+  }
+  return { minZoom: TILE_MIN_ZOOM, maxZoom: TILE_MAX_ZOOM, count: tiles.length };
 }
 
 async function ensureDir(path) {
@@ -131,6 +209,23 @@ export async function downloadIsland(islandId) {
     recursive: true,
   });
 
+  // Download raster map tiles for offline use
+  try {
+    const tileInfo = await downloadMapTiles(islandId);
+    if (tileInfo) {
+      manifest.mapTiles = tileInfo;
+      await Filesystem.writeFile({
+        path: manifestPath(islandId),
+        data: JSON.stringify(manifest),
+        directory: Directory.Data,
+        encoding: Encoding.UTF8,
+        recursive: true,
+      });
+    }
+  } catch (e) {
+    console.warn(`Failed to download map tiles for ${islandId}:`, e);
+  }
+
   return manifest;
 }
 
@@ -174,7 +269,7 @@ export async function deleteIslandData(islandId) {
     // file may not exist
   }
 
-  // Delete media directory
+  // Delete media directory (includes tiles subdirectory)
   try {
     await Filesystem.rmdir({
       path: mediaDir(islandId),
@@ -184,4 +279,29 @@ export async function deleteIslandData(islandId) {
   } catch (e) {
     // directory may not exist
   }
+}
+
+export function getOfflineMapStyle(islandId) {
+  const dir = tilesDir(islandId);
+  const baseUri = Capacitor.convertFileSrc(`${dir}/{z}/{x}/{y}.png`);
+  return {
+    version: 8,
+    sources: {
+      "offline-tiles": {
+        type: "raster",
+        tiles: [baseUri],
+        tileSize: 512,
+        maxzoom: TILE_MAX_ZOOM,
+      },
+    },
+    layers: [
+      {
+        id: "offline-tiles-layer",
+        type: "raster",
+        source: "offline-tiles",
+        minzoom: TILE_MIN_ZOOM,
+        maxzoom: TILE_MAX_ZOOM + 1,
+      },
+    ],
+  };
 }
