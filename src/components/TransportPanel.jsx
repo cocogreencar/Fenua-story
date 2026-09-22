@@ -55,6 +55,11 @@ const FERRY_URL = {
   en: "https://www.horaires-tahiti.com/en/",
 };
 
+const FLIGHTS = [
+  { name: "Air Tahiti", url: "https://www.airtahiti.com/" },
+  { name: "Air Moana", url: "https://www.airmoana.com/" },
+];
+
 export default function TransportPanel({ open, onClose }) {
   const { lang } = useLanguage();
   const isFr = lang === "fr";
@@ -132,9 +137,13 @@ export default function TransportPanel({ open, onClose }) {
                     ? isFr
                       ? "Louer une voiture"
                       : "Rent a car"
-                    : isFr
-                      ? "Transport"
-                      : "Transport"}
+                    : view === "flights"
+                      ? isFr
+                        ? "Vols inter-îles"
+                        : "Inter-island flights"
+                      : isFr
+                        ? "Transport"
+                        : "Transport"}
               </Typography>
             </Box>
             <IconButton
@@ -154,7 +163,7 @@ export default function TransportPanel({ open, onClose }) {
               {OPTIONS.map((option) => (
                 <Box
                   key={option.id}
-                  onClick={() => option.id !== "flights" && setView(option.id)}
+                  onClick={() => setView(option.id)}
                   sx={{
                     display: "flex",
                     alignItems: "center",
@@ -165,15 +174,11 @@ export default function TransportPanel({ open, onClose }) {
                     background: "rgba(255,255,255,0.05)",
                     border: "1px solid rgba(255,255,255,0.08)",
                     transition: "background 0.2s ease",
-                    cursor: option.id === "flights" ? "default" : "pointer",
-                    opacity: option.id === "flights" ? 0.5 : 1,
-                    "&:hover":
-                      option.id === "flights"
-                        ? {}
-                        : {
-                            background: "rgba(100,181,246,0.08)",
-                            borderColor: "rgba(100,181,246,0.15)",
-                          },
+                    cursor: "pointer",
+                    "&:hover": {
+                      background: "rgba(100,181,246,0.08)",
+                      borderColor: "rgba(100,181,246,0.15)",
+                    },
                   }}
                 >
                   <Typography sx={{ fontSize: "2rem" }}>{option.emoji}</Typography>
@@ -258,6 +263,78 @@ export default function TransportPanel({ open, onClose }) {
                 >
                   {isFr ? "Voir les horaires" : "View schedules"}
                 </Button>
+              </Box>
+            </Box>
+          )}
+
+          {/* Flights view */}
+          {view === "flights" && (
+            <Box
+              sx={{
+                overflowY: "auto",
+                "&::-webkit-scrollbar": { width: "4px" },
+                "&::-webkit-scrollbar-thumb": {
+                  bgcolor: "rgba(255,255,255,0.15)",
+                  borderRadius: 2,
+                },
+              }}
+            >
+              <Typography sx={{ fontSize: "3rem", textAlign: "center", mb: 2 }}>
+                ✈️
+              </Typography>
+              <Typography
+                sx={{
+                  color: "rgba(255,255,255,0.55)",
+                  fontSize: "0.85rem",
+                  lineHeight: 1.5,
+                  textAlign: "center",
+                  mb: 3,
+                }}
+              >
+                {isFr
+                  ? "Réservez vos vols entre les îles de Polynésie."
+                  : "Book your flights between the islands of French Polynesia."}
+              </Typography>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                {FLIGHTS.map((flight) => (
+                  <Box
+                    key={flight.name}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 1.5,
+                      py: 1.75,
+                      px: 2,
+                      borderRadius: 3,
+                      background: "rgba(255,255,255,0.05)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                    }}
+                  >
+                    <Typography sx={{ color: "#ffffff", fontWeight: 600 }}>
+                      {flight.name}
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => openExternal(flight.url)}
+                      startIcon={<OpenInNewIcon />}
+                      sx={{
+                        bgcolor: "#64b5f6",
+                        color: "#0a1929",
+                        fontWeight: 700,
+                        textTransform: "none",
+                        borderRadius: 2,
+                        px: 1.5,
+                        py: 0.75,
+                        whiteSpace: "nowrap",
+                        "&:hover": { bgcolor: "#42a5f5" },
+                      }}
+                    >
+                      {isFr ? "Voir les vols" : "View flights"}
+                    </Button>
+                  </Box>
+                ))}
               </Box>
             </Box>
           )}

@@ -18,7 +18,7 @@ import EmergencyIcon from "@mui/icons-material/Emergency";
 import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
 import TranslateIcon from "@mui/icons-material/Translate";
 import LightbulbIcon from "@mui/icons-material/Lightbulb";
-import DirectionsBoatIcon from "@mui/icons-material/DirectionsBoat";
+
 import CloseIcon from "@mui/icons-material/Close";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import { useLanguage } from "../context/LanguageContext";
@@ -73,7 +73,14 @@ export default function PracticalPage() {
       emoji: "💡",
     },
     {
-      icon: <DirectionsBoatIcon sx={{ fontSize: 36, color: "#64b5f6" }} />,
+      icon: (
+        <Box
+          component="img"
+          src="/icons/picto.png"
+          alt=""
+          sx={{ width: 44, height: 44, objectFit: "contain" }}
+        />
+      ),
       label: lang === "fr" ? "Transport" : "Transport",
       emoji: "🚢",
       onClick: () => setTransportOpen(true),
