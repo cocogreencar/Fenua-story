@@ -6,6 +6,7 @@ import HomePage from "./pages/HomePage";
 import IslandSelection from "./pages/IslandSelection";
 import BadgePage from "./pages/BadgePage";
 import MorePage from "./pages/MorePage";
+import PracticalPage from "./pages/PracticalPage";
 import AboutPage from "./pages/AboutPage";
 import LocationsList from "./pages/LocationsList";
 import EditLocations from "./pages/EditLocations";
@@ -22,6 +23,7 @@ export default function App() {
         <Route path="/map/:islandId" element={<HomePage />} />
         <Route path="/badge" element={<BadgePage />} />
         <Route path="/more" element={<MorePage />} />
+        <Route path="/practical" element={<PracticalPage />} />
         <Route path="/about" element={<AboutPage />} />
 
         <Route path="/admin-login" element={<AdminLogin />} />
