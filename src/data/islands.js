@@ -3,7 +3,7 @@ export const islands = [
     id: "moorea",
     name: { en: "Moorea", fr: "Moorea" },
     tagline: { en: "The magical island", fr: "L'île magique" },
-    image: "/assets/imgs/moorea.jpg",
+    image: "/assets/imgs/moorea copy.jpg",
     center: [-149.842, -17.535],
     zoom: 11,
   },
