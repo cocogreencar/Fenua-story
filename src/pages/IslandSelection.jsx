@@ -156,6 +156,7 @@ export default function IslandSelection() {
                 component="img"
                 sx={{
                   height: { xs: 150, sm: 260 },
+                  objectFit: "cover",
                   transition: "transform 0.5s ease",
                   transform: hoveredId === island.id ? "scale(1.08)" : "scale(1)",
                 }}
