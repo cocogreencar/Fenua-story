@@ -17,6 +17,7 @@ import LightbulbIcon from "@mui/icons-material/Lightbulb";
 import CloudIcon from "@mui/icons-material/Cloud";
 import { useLanguage } from "../context/LanguageContext";
 import BottomNav from "../components/BottomNav";
+import WeatherCard from "../components/WeatherCard";
 
 export default function PracticalPage() {
   const { lang } = useLanguage();
@@ -144,22 +145,7 @@ export default function PracticalPage() {
               ))}
             </ToggleButtonGroup>
 
-            <Box
-              sx={{
-                mt: 2.5,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                minHeight: 80,
-                color: "rgba(255,255,255,0.4)",
-                fontSize: "0.9rem",
-                fontStyle: "italic",
-              }}
-            >
-              {lang === "fr"
-                ? "Aperçu météo à venir"
-                : "Weather preview coming soon"}
-            </Box>
+            <WeatherCard selectedIsland={selectedIsland} />
           </CardContent>
         </Card>
       </Fade>
