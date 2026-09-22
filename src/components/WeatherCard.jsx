@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { Box, Typography, CircularProgress } from "@mui/material";
-import WbSunnyIcon from "@mui/icons-material/WbSunny";
 import { useLanguage } from "../context/LanguageContext";
 import { fetchWeather, getCachedWeather, isCacheStale } from "../services/weatherService";
 import WeatherAnimation from "./WeatherAnimation";
@@ -104,13 +103,6 @@ export default function WeatherCard({ selectedIsland }) {
 
   return (
     <>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2.5 }}>
-        <WbSunnyIcon sx={{ color: "#ffca28", fontSize: 28 }} />
-        <Typography sx={{ color: "#ffffff", fontWeight: 600, fontSize: "1.1rem" }}>
-          {t("Weather", "Météo")}
-        </Typography>
-      </Box>
-
       {loading && !weather && (
         <Box
           sx={{
