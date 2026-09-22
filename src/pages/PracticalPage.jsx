@@ -25,11 +25,13 @@ import { useLanguage } from "../context/LanguageContext";
 import BottomNav from "../components/BottomNav";
 import WeatherCard from "../components/WeatherCard";
 import CurrencyConverter from "../components/CurrencyConverter";
+import NearbyPanel from "../components/NearbyPanel";
 
 export default function PracticalPage() {
   const { lang } = useLanguage();
   const [selectedIsland, setSelectedIsland] = useState("moorea");
   const [converterOpen, setConverterOpen] = useState(false);
+  const [nearbyOpen, setNearbyOpen] = useState(false);
 
   const islands = [
     { id: "moorea", label: lang === "fr" ? "Moorea" : "Moorea" },
@@ -53,6 +55,7 @@ export default function PracticalPage() {
       icon: <LocalHospitalIcon sx={{ fontSize: 36, color: "#66bb6a" }} />,
       label: lang === "fr" ? "Autour de moi" : "Nearby",
       emoji: "🏥",
+      onClick: () => setNearbyOpen(true),
     },
     {
       icon: <TranslateIcon sx={{ fontSize: 36, color: "#ffca28" }} />,
@@ -218,6 +221,11 @@ export default function PracticalPage() {
       <CurrencyConverter
         open={converterOpen}
         onClose={() => setConverterOpen(false)}
+      />
+
+      <NearbyPanel
+        open={nearbyOpen}
+        onClose={() => setNearbyOpen(false)}
       />
 
       <BottomNav />
