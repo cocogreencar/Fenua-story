@@ -26,12 +26,14 @@ import BottomNav from "../components/BottomNav";
 import WeatherCard from "../components/WeatherCard";
 import CurrencyConverter from "../components/CurrencyConverter";
 import NearbyPanel from "../components/NearbyPanel";
+import PhrasesPanel from "../components/PhrasesPanel";
 
 export default function PracticalPage() {
   const { lang } = useLanguage();
   const [selectedIsland, setSelectedIsland] = useState("moorea");
   const [converterOpen, setConverterOpen] = useState(false);
   const [nearbyOpen, setNearbyOpen] = useState(false);
+  const [phrasesOpen, setPhrasesOpen] = useState(false);
 
   const islands = [
     { id: "moorea", label: lang === "fr" ? "Moorea" : "Moorea" },
@@ -61,6 +63,7 @@ export default function PracticalPage() {
       icon: <TranslateIcon sx={{ fontSize: 36, color: "#ffca28" }} />,
       label: lang === "fr" ? "Petit lexique" : "Useful phrases",
       emoji: "🌺",
+      onClick: () => setPhrasesOpen(true),
     },
     {
       icon: <LightbulbIcon sx={{ fontSize: 36, color: "#ffca28" }} />,
@@ -226,6 +229,11 @@ export default function PracticalPage() {
       <NearbyPanel
         open={nearbyOpen}
         onClose={() => setNearbyOpen(false)}
+      />
+
+      <PhrasesPanel
+        open={phrasesOpen}
+        onClose={() => setPhrasesOpen(false)}
       />
 
       <BottomNav />
