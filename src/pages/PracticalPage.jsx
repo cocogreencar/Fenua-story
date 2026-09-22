@@ -18,7 +18,7 @@ import EmergencyIcon from "@mui/icons-material/Emergency";
 import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
 import TranslateIcon from "@mui/icons-material/Translate";
 import LightbulbIcon from "@mui/icons-material/Lightbulb";
-import CloudIcon from "@mui/icons-material/Cloud";
+import DirectionsBoatIcon from "@mui/icons-material/DirectionsBoat";
 import CloseIcon from "@mui/icons-material/Close";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import { useLanguage } from "../context/LanguageContext";
@@ -27,6 +27,7 @@ import WeatherCard from "../components/WeatherCard";
 import CurrencyConverter from "../components/CurrencyConverter";
 import NearbyPanel from "../components/NearbyPanel";
 import PhrasesPanel from "../components/PhrasesPanel";
+import TransportPanel from "../components/TransportPanel";
 
 export default function PracticalPage() {
   const { lang } = useLanguage();
@@ -34,6 +35,7 @@ export default function PracticalPage() {
   const [converterOpen, setConverterOpen] = useState(false);
   const [nearbyOpen, setNearbyOpen] = useState(false);
   const [phrasesOpen, setPhrasesOpen] = useState(false);
+  const [transportOpen, setTransportOpen] = useState(false);
 
   const islands = [
     { id: "moorea", label: lang === "fr" ? "Moorea" : "Moorea" },
@@ -71,9 +73,10 @@ export default function PracticalPage() {
       emoji: "💡",
     },
     {
-      icon: <CloudIcon sx={{ fontSize: 36, color: "#64b5f6" }} />,
-      label: lang === "fr" ? "Météo détaillée" : "Detailed weather",
-      emoji: "☀️",
+      icon: <DirectionsBoatIcon sx={{ fontSize: 36, color: "#64b5f6" }} />,
+      label: lang === "fr" ? "Transport" : "Transport",
+      emoji: "🚢",
+      onClick: () => setTransportOpen(true),
     },
   ];
 
@@ -234,6 +237,11 @@ export default function PracticalPage() {
       <PhrasesPanel
         open={phrasesOpen}
         onClose={() => setPhrasesOpen(false)}
+      />
+
+      <TransportPanel
+        open={transportOpen}
+        onClose={() => setTransportOpen(false)}
       />
 
       <BottomNav />
