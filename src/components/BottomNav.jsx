@@ -18,14 +18,14 @@ export default function BottomNav() {
       path: "/",
     },
     {
-      label: lang === "fr" ? "Pratique" : "Practical",
-      icon: <HandymanIcon />,
-      path: "/practical",
-    },
-    {
       label: lang === "fr" ? "Badge" : "Badge",
       icon: <CardMembershipIcon />,
       path: "/badge",
+    },
+    {
+      label: lang === "fr" ? "Pratique" : "Practical",
+      icon: <HandymanIcon />,
+      path: "/practical",
     },
     {
       label: lang === "fr" ? "Plus" : "More",
@@ -36,8 +36,8 @@ export default function BottomNav() {
 
   const currentTab = (() => {
     if (location.pathname === "/") return 0;
-    if (location.pathname === "/practical") return 1;
-    if (location.pathname === "/badge") return 2;
+    if (location.pathname === "/badge") return 1;
+    if (location.pathname === "/practical") return 2;
     if (location.pathname === "/more") return 3;
     return 0;
   })();
