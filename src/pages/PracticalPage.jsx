@@ -18,6 +18,9 @@ import EmergencyIcon from "@mui/icons-material/Emergency";
 import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
 import TranslateIcon from "@mui/icons-material/Translate";
 import LightbulbIcon from "@mui/icons-material/Lightbulb";
+import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
+import FlightIcon from "@mui/icons-material/Flight";
+import DirectionsBoatIcon from "@mui/icons-material/DirectionsBoat";
 
 import CloseIcon from "@mui/icons-material/Close";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
@@ -74,12 +77,11 @@ export default function PracticalPage() {
     },
     {
       icon: (
-        <Box
-          component="img"
-          src="/icons/picto.png"
-          alt=""
-          sx={{ width: 44, height: 44, objectFit: "contain" }}
-        />
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <DirectionsCarIcon sx={{ fontSize: 22, color: "#64b5f6" }} />
+          <DirectionsBoatIcon sx={{ fontSize: 22, color: "#64b5f6" }} />
+          <FlightIcon sx={{ fontSize: 22, color: "#64b5f6" }} />
+        </Box>
       ),
       label: lang === "fr" ? "Transport" : "Transport",
       emoji: "🚢",
