@@ -7,6 +7,10 @@ import {
   CardContent,
   ToggleButtonGroup,
   ToggleButton,
+  Modal,
+  IconButton,
+  TextField,
+  InputAdornment,
 } from "@mui/material";
 import WbSunnyIcon from "@mui/icons-material/WbSunny";
 import CurrencyExchangeIcon from "@mui/icons-material/CurrencyExchange";
@@ -15,13 +19,17 @@ import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
 import TranslateIcon from "@mui/icons-material/Translate";
 import LightbulbIcon from "@mui/icons-material/Lightbulb";
 import CloudIcon from "@mui/icons-material/Cloud";
+import CloseIcon from "@mui/icons-material/Close";
+import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import { useLanguage } from "../context/LanguageContext";
 import BottomNav from "../components/BottomNav";
 import WeatherCard from "../components/WeatherCard";
+import CurrencyConverter from "../components/CurrencyConverter";
 
 export default function PracticalPage() {
   const { lang } = useLanguage();
   const [selectedIsland, setSelectedIsland] = useState("moorea");
+  const [converterOpen, setConverterOpen] = useState(false);
 
   const islands = [
     { id: "moorea", label: lang === "fr" ? "Moorea" : "Moorea" },
@@ -34,6 +42,7 @@ export default function PracticalPage() {
       icon: <CurrencyExchangeIcon sx={{ fontSize: 36, color: "#64b5f6" }} />,
       label: lang === "fr" ? "Convertisseur" : "Currency converter",
       emoji: "💱",
+      onClick: () => setConverterOpen(true),
     },
     {
       icon: <EmergencyIcon sx={{ fontSize: 36, color: "#ef5350" }} />,
@@ -162,6 +171,7 @@ export default function PracticalPage() {
           {cards.map((card, idx) => (
             <Card
               key={idx}
+              onClick={card.onClick}
               sx={{
                 borderRadius: 4,
                 background: "rgba(255,255,255,0.05)",
@@ -204,6 +214,11 @@ export default function PracticalPage() {
           ))}
         </Box>
       </Fade>
+
+      <CurrencyConverter
+        open={converterOpen}
+        onClose={() => setConverterOpen(false)}
+      />
 
       <BottomNav />
     </Box>
