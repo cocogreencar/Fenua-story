@@ -32,6 +32,7 @@ import NearbyPanel from "../components/NearbyPanel";
 import PhrasesPanel from "../components/PhrasesPanel";
 import TransportPanel from "../components/TransportPanel";
 import EmergencyPanel from "../components/EmergencyPanel";
+import GoodToKnowPanel from "../components/GoodToKnowPanel";
 
 export default function PracticalPage() {
   const { lang } = useLanguage();
@@ -41,6 +42,7 @@ export default function PracticalPage() {
   const [phrasesOpen, setPhrasesOpen] = useState(false);
   const [transportOpen, setTransportOpen] = useState(false);
   const [emergencyOpen, setEmergencyOpen] = useState(false);
+  const [goodToKnowOpen, setGoodToKnowOpen] = useState(false);
 
   const islands = [
     { id: "moorea", label: lang === "fr" ? "Moorea" : "Moorea" },
@@ -71,6 +73,7 @@ export default function PracticalPage() {
       icon: <LightbulbIcon sx={{ fontSize: 36, color: "#ffca28" }} />,
       label: lang === "fr" ? "À savoir" : "Good to know",
       emoji: "💡",
+      onClick: () => setGoodToKnowOpen(true),
     },
     {
       icon: (
@@ -259,6 +262,11 @@ export default function PracticalPage() {
       <EmergencyPanel
         open={emergencyOpen}
         onClose={() => setEmergencyOpen(false)}
+      />
+
+      <GoodToKnowPanel
+        open={goodToKnowOpen}
+        onClose={() => setGoodToKnowOpen(false)}
       />
 
       <BottomNav />
