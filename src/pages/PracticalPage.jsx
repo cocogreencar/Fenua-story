@@ -31,6 +31,7 @@ import CurrencyConverter from "../components/CurrencyConverter";
 import NearbyPanel from "../components/NearbyPanel";
 import PhrasesPanel from "../components/PhrasesPanel";
 import TransportPanel from "../components/TransportPanel";
+import EmergencyPanel from "../components/EmergencyPanel";
 
 export default function PracticalPage() {
   const { lang } = useLanguage();
@@ -39,6 +40,7 @@ export default function PracticalPage() {
   const [nearbyOpen, setNearbyOpen] = useState(false);
   const [phrasesOpen, setPhrasesOpen] = useState(false);
   const [transportOpen, setTransportOpen] = useState(false);
+  const [emergencyOpen, setEmergencyOpen] = useState(false);
 
   const islands = [
     { id: "moorea", label: lang === "fr" ? "Moorea" : "Moorea" },
@@ -52,11 +54,6 @@ export default function PracticalPage() {
       label: lang === "fr" ? "Convertisseur" : "Currency converter",
       emoji: "💱",
       onClick: () => setConverterOpen(true),
-    },
-    {
-      icon: <EmergencyIcon sx={{ fontSize: 36, color: "#ef5350" }} />,
-      label: lang === "fr" ? "Urgences" : "Emergency",
-      emoji: "🆘",
     },
     {
       icon: <LocalHospitalIcon sx={{ fontSize: 36, color: "#66bb6a" }} />,
@@ -86,6 +83,12 @@ export default function PracticalPage() {
       label: lang === "fr" ? "Transport" : "Transport",
       emoji: "🚢",
       onClick: () => setTransportOpen(true),
+    },
+    {
+      icon: <EmergencyIcon sx={{ fontSize: 36, color: "#ef5350" }} />,
+      label: lang === "fr" ? "Urgences" : "Emergency",
+      emoji: "🆘",
+      onClick: () => setEmergencyOpen(true),
     },
   ];
 
@@ -251,6 +254,11 @@ export default function PracticalPage() {
       <TransportPanel
         open={transportOpen}
         onClose={() => setTransportOpen(false)}
+      />
+
+      <EmergencyPanel
+        open={emergencyOpen}
+        onClose={() => setEmergencyOpen(false)}
       />
 
       <BottomNav />
