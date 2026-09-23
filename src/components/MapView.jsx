@@ -114,7 +114,7 @@ export default function MapView({ lang, island }) {
             const coords = routeGeo.coordinates;
             const bounds = coords.reduce(
               (b, c) => b.extend(c),
-              new mapboxgl.LngBounds(coords[0], coords[0])
+              new mapboxgl.LngLatBounds(coords[0], coords[0])
             );
             m.fitBounds(bounds, {
               padding: { top: 120, bottom: 120, left: 80, right: 80 },
