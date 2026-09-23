@@ -352,49 +352,59 @@ export default function MapView({ lang, island }) {
         style={{ width: "100%", height: "100vh", borderRadius: "12px" }}
       />
 
-      {/* Route info bar */}
+      {/* Route info bar — compact, top-center */}
       {routeInfo && (
         <div
           style={{
             position: "absolute",
-            bottom: "16px",
+            top: "10px",
             left: "50%",
             transform: "translateX(-50%)",
             zIndex: 1000,
             display: "flex",
             alignItems: "center",
-            gap: "12px",
-            padding: "10px 16px",
-            borderRadius: "12px",
-            background: "rgba(13, 30, 48, 0.95)",
-            border: "1px solid rgba(100,181,246,0.3)",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
+            gap: "8px",
+            padding: "6px 10px 6px 14px",
+            borderRadius: "20px",
+            background: "rgba(13, 30, 48, 0.92)",
+            border: "1px solid rgba(100,181,246,0.25)",
+            boxShadow: "0 2px 12px rgba(0,0,0,0.35)",
             color: "#ffffff",
-            fontSize: "0.9rem",
-            fontWeight: 600,
+            fontSize: "0.82rem",
+            fontWeight: 500,
             maxWidth: "90vw",
+            whiteSpace: "nowrap",
           }}
         >
-          <span style={{ fontSize: "1.1rem" }}>🚗</span>
-          <span>
-            {routeInfo.durationMin} min • {routeInfo.distanceKm} km
+          <span style={{ fontSize: "0.95rem" }}>🚗</span>
+          <span style={{ fontWeight: 700, fontSize: "0.88rem" }}>
+            {routeInfo.durationMin} min
           </span>
+          <span style={{ opacity: 0.5, fontWeight: 400 }}>•</span>
+          <span>{routeInfo.distanceKm} km</span>
           <button
             onClick={clearRoute}
+            aria-label={lang === "fr" ? "Quitter l'itinéraire" : "Exit route"}
             style={{
-              marginLeft: "8px",
-              padding: "4px 12px",
-              borderRadius: "8px",
+              marginLeft: "4px",
+              width: "26px",
+              height: "26px",
+              minWidth: "26px",
+              borderRadius: "50%",
               border: "none",
-              background: "rgba(239,83,80,0.85)",
+              background: "rgba(239,83,80,0.9)",
               color: "#fff",
-              fontSize: "0.8rem",
-              fontWeight: 600,
+              fontSize: "0.85rem",
+              fontWeight: 700,
               cursor: "pointer",
-              whiteSpace: "nowrap",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              lineHeight: 1,
+              padding: 0,
             }}
           >
-            {lang === "fr" ? "✕ Quitter l'itinéraire" : "✕ Exit route"}
+            ✕
           </button>
         </div>
       )}
