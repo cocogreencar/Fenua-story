@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import usePOIs from "../hooks/usePOIs";
@@ -7,14 +7,21 @@ import ReactDOM from "react-dom/client";
 import { readIslandManifest, getOfflineMapStyle } from "../services/offlineStorage";
 import { islandBounds } from "../data/islands";
 
+const ROUTE_LAYER_ID = "route-line";
+const ROUTE_SOURCE_ID = "route-source";
+
 export default function MapView({ lang, island }) {
   const mapContainer = useRef(null);
   const map = useRef(null);
   const markersRef = useRef([]);
+  const activePopupRef = useRef(null);
+  const routeStateRef = useRef({ active: false });
 
   const { pois, loading, error } = usePOIs(island?.id);
   const [offlineMode, setOfflineMode] = useState(false);
   const [hasTiles, setHasTiles] = useState(false);
+  const [routeInfo, setRouteInfo] = useState(null);
+  const [routeError, setRouteError] = useState(null);
 
   const categoryIcons = {
     "Point of interest": "/icons/m1-01.svg",
@@ -22,7 +29,129 @@ export default function MapView({ lang, island }) {
     "Tourist activities": "/icons/m2-01.svg",
   };
 
-  // Detect offline state: if Firebase errored and we loaded from manifest
+  const isOnline = () => navigator.onLine;
+
+  const clearRoute = useCallback(() => {
+    const m = map.current;
+    if (!m) return;
+
+    if (m.getLayer(ROUTE_LAYER_ID)) m.removeLayer(ROUTE_LAYER_ID);
+    if (m.getSource(ROUTE_SOURCE_ID)) m.removeSource(ROUTE_SOURCE_ID);
+
+    routeStateRef.current = { active: false };
+    setRouteInfo(null);
+    setRouteError(null);
+  }, []);
+
+  const requestRoute = useCallback(
+    async (poi) => {
+      if (!poi?.location?.lat || !poi?.location?.lng) return;
+      if (!isOnline()) {
+        setRouteError(
+          lang === "fr"
+            ? "Connexion Internet nécessaire pour calculer l'itinéraire."
+            : "An Internet connection is required to calculate the route."
+        );
+        return;
+      }
+
+      const m = map.current;
+      if (!m) return;
+
+      setRouteError(null);
+
+      const destLng = poi.location.lng;
+      const destLat = poi.location.lat;
+
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const originLng = pos.coords.longitude;
+          const originLat = pos.coords.latitude;
+
+          const token = import.meta.env.VITE_MAPBOX_TOKEN;
+          const url =
+            `https://api.mapbox.com/directions/v5/mapbox/driving/` +
+            `${originLng},${originLat};${destLng},${destLat}` +
+            `?geometries=geojson&overview=full&steps=false&access_token=${token}`;
+
+          try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error("Directions API error");
+            const data = await res.json();
+            if (!data.routes || data.routes.length === 0) throw new Error("No route");
+
+            const route = data.routes[0];
+            const routeGeo = route.geometry;
+
+            clearRoute();
+
+            m.addSource(ROUTE_SOURCE_ID, {
+              type: "geojson",
+              data: {
+                type: "Feature",
+                geometry: routeGeo,
+                properties: {},
+              },
+            });
+
+            m.addLayer({
+              id: ROUTE_LAYER_ID,
+              type: "line",
+              source: ROUTE_SOURCE_ID,
+              layout: {
+                "line-join": "round",
+                "line-cap": "round",
+              },
+              paint: {
+                "line-color": "#64b5f6",
+                "line-width": 5,
+                "line-opacity": 0.85,
+              },
+            });
+
+            routeStateRef.current = { active: true };
+
+            const coords = routeGeo.coordinates;
+            const bounds = coords.reduce(
+              (b, c) => b.extend(c),
+              new mapboxgl.LngBounds(coords[0], coords[0])
+            );
+            m.fitBounds(bounds, {
+              padding: { top: 120, bottom: 120, left: 80, right: 80 },
+              duration: 800,
+            });
+
+            const durationMin = Math.round(route.duration / 60);
+            const distanceKm = (route.distance / 1000).toFixed(1);
+
+            setRouteInfo({ durationMin, distanceKm });
+
+            if (activePopupRef.current) {
+              activePopupRef.current.remove();
+              activePopupRef.current = null;
+            }
+          } catch {
+            setRouteError(
+              lang === "fr"
+                ? "Impossible de calculer l'itinéraire. Veuillez réessayer."
+                : "Could not calculate the route. Please try again."
+            );
+          }
+        },
+        () => {
+          setRouteError(
+            lang === "fr"
+              ? "Impossible d'obtenir votre position."
+              : "Could not get your location."
+          );
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    },
+    [lang, clearRoute]
+  );
+
+  // Detect offline state
   useEffect(() => {
     if (!island?.id) return;
     if (error) {
@@ -43,12 +172,7 @@ export default function MapView({ lang, island }) {
 
     mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
-    // Determine style: online vector style, or offline raster tiles if available
     let style = "mapbox://styles/mapbox/outdoors-v12";
-
-    // We'll check for offline tiles synchronously via a flag set by the detection effect.
-    // The map initializes with online style by default; if offline, the style swap
-    // happens in a separate effect below once hasTiles is confirmed.
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
@@ -57,13 +181,11 @@ export default function MapView({ lang, island }) {
       zoom: island.zoom,
     });
 
-    // Fit map to island bounds on initial load (per-island tuning)
     map.current.on("load", () => {
       const bounds = islandBounds[island.id];
       if (!bounds) return;
 
       if (island.id === "tahiti") {
-        // Same zoom, shifted right so the whole island is visible
         map.current.fitBounds(
           [
             [bounds.lngMin, bounds.latMin],
@@ -72,7 +194,6 @@ export default function MapView({ lang, island }) {
           { padding: { top: 80, bottom: 80, left: 160, right: 40 }, duration: 0 }
         );
       } else if (island.id === "bora-bora") {
-        // Tighter display bounds — island + lagoon only, zoomed in
         map.current.fitBounds(
           [
             [-151.78, -16.58],
@@ -81,7 +202,6 @@ export default function MapView({ lang, island }) {
           { padding: { top: 80, bottom: 80, left: 40, right: 40 }, duration: 0 }
         );
       } else {
-        // Moorea and default — unchanged
         map.current.fitBounds(
           [
             [bounds.lngMin, bounds.latMin],
@@ -92,13 +212,11 @@ export default function MapView({ lang, island }) {
       }
     });
 
-    // 🔹 Zoom + rotation controls
     map.current.addControl(
       new mapboxgl.NavigationControl({ visualizePitch: true }),
       "top-right"
     );
 
-    // 🔹 User location (GPS)
     map.current.addControl(
       new mapboxgl.GeolocateControl({
         positionOptions: {
@@ -124,7 +242,6 @@ export default function MapView({ lang, island }) {
   useEffect(() => {
     if (!map.current || loading) return;
 
-    // Clear old markers
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current = [];
 
@@ -150,16 +267,19 @@ export default function MapView({ lang, island }) {
           onClose={() => {
             popup.remove();
             if (currentPopup === popup) currentPopup = null;
+            if (activePopupRef.current === popup) activePopupRef.current = null;
+          }}
+          onDirections={() => {
+            activePopupRef.current = popup;
+            requestRoute(poi);
           }}
         />
       );
 
       popup.setDOMContent(popupNode);
 
-      // Pick icon based on category
-      const iconSrc = categoryIcons[poi.category?.en] || "/icons/m1-01.svg"; // fallback
+      const iconSrc = categoryIcons[poi.category?.en] || "/icons/m1-01.svg";
 
-      // Create custom marker HTML
       const el = document.createElement("div");
       el.innerHTML = `
   <img src="${iconSrc}" 
@@ -168,33 +288,30 @@ export default function MapView({ lang, island }) {
 `;
       el.style.cursor = "pointer";
 
-      // Create marker with custom element
       const marker = new mapboxgl.Marker({ element: el, anchor: "bottom" })
         .setLngLat([poi.location.lng, poi.location.lat])
         .setPopup(popup)
         .addTo(map.current);
 
-      // Track current popup to close previous one
       marker.getElement().addEventListener("click", () => {
         if (currentPopup && currentPopup !== popup) {
           currentPopup.remove();
         }
-
         currentPopup = popup;
+        activePopupRef.current = popup;
 
-        // Zoom & center to marker
         map.current.flyTo({
           center: [poi.location.lng, poi.location.lat],
-          zoom: 15, // adjust zoom level as you like
-          speed: 1.2, // animation speed
-          curve: 1.42, // animation smoothness
-          essential: true, // respects reduced motion
+          zoom: 15,
+          speed: 1.2,
+          curve: 1.42,
+          essential: true,
         });
       });
 
       markersRef.current.push(marker);
     });
-  }, [pois, loading, lang]);
+  }, [pois, loading, lang, requestRoute]);
 
   // Show message when offline and island not downloaded
   if (offlineMode && !hasTiles && !loading) {
@@ -229,9 +346,83 @@ export default function MapView({ lang, island }) {
   }
 
   return (
-    <div
-      ref={mapContainer}
-      style={{ width: "100%", height: "100vh", borderRadius: "12px" }}
-    />
+    <>
+      <div
+        ref={mapContainer}
+        style={{ width: "100%", height: "100vh", borderRadius: "12px" }}
+      />
+
+      {/* Route info bar */}
+      {routeInfo && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: "16px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 1000,
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            padding: "10px 16px",
+            borderRadius: "12px",
+            background: "rgba(13, 30, 48, 0.95)",
+            border: "1px solid rgba(100,181,246,0.3)",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
+            color: "#ffffff",
+            fontSize: "0.9rem",
+            fontWeight: 600,
+            maxWidth: "90vw",
+          }}
+        >
+          <span style={{ fontSize: "1.1rem" }}>🚗</span>
+          <span>
+            {routeInfo.durationMin} min • {routeInfo.distanceKm} km
+          </span>
+          <button
+            onClick={clearRoute}
+            style={{
+              marginLeft: "8px",
+              padding: "4px 12px",
+              borderRadius: "8px",
+              border: "none",
+              background: "rgba(239,83,80,0.85)",
+              color: "#fff",
+              fontSize: "0.8rem",
+              fontWeight: 600,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {lang === "fr" ? "✕ Quitter l'itinéraire" : "✕ Exit route"}
+          </button>
+        </div>
+      )}
+
+      {/* Route error toast */}
+      {routeError && (
+        <div
+          style={{
+            position: "absolute",
+            top: "16px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 1000,
+            padding: "10px 18px",
+            borderRadius: "12px",
+            background: "rgba(239,83,80,0.92)",
+            color: "#fff",
+            fontSize: "0.85rem",
+            fontWeight: 500,
+            maxWidth: "90vw",
+            textAlign: "center",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
+          }}
+          onClick={() => setRouteError(null)}
+        >
+          {routeError}
+        </div>
+      )}
+    </>
   );
 }

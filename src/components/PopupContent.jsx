@@ -17,7 +17,7 @@ import { storage } from "../services/firebaseConfig";
 import CloseIcon from "@mui/icons-material/Close";
 import { useMediaQuery } from "@mui/material";
 
-export default function PopupContent({ poi, lang, onClose }) {
+export default function PopupContent({ poi, lang, onClose, onDirections }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [imageUrl, setImageUrl] = useState(null);
   const [audioUrl, setAudioUrl] = useState(null);
@@ -128,6 +128,30 @@ export default function PopupContent({ poi, lang, onClose }) {
               onClick={() => setDrawerOpen(true)}
             >
               {lang === "fr" ? "Lire la suite" : "Read more"}
+            </Button>
+          )}
+
+          {/* Directions button */}
+          {poi.location?.lat && poi.location?.lng && onDirections && (
+            <Button
+              size="small"
+              fullWidth
+              variant="outlined"
+              startIcon={<span style={{ fontSize: "1rem" }}>🧭</span>}
+              sx={{
+                mt: 1.5,
+                textTransform: "none",
+                borderColor: "rgba(100,181,246,0.5)",
+                color: "#1976d2",
+                fontWeight: 600,
+                "&:hover": {
+                  borderColor: "#64b5f6",
+                  background: "rgba(100,181,246,0.08)",
+                },
+              }}
+              onClick={onDirections}
+            >
+              {lang === "fr" ? "M'y rendre" : "Directions"}
             </Button>
           )}
         </CardContent>
