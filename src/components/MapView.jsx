@@ -16,6 +16,7 @@ export default function MapView({ lang, island }) {
   const markersRef = useRef([]);
   const activePopupRef = useRef(null);
   const routeStateRef = useRef({ active: false });
+  const geolocateRef = useRef(null);
 
   const { pois, loading, error } = usePOIs(island?.id);
   const [offlineMode, setOfflineMode] = useState(false);
@@ -63,90 +64,98 @@ export default function MapView({ lang, island }) {
       const destLng = poi.location.lng;
       const destLat = poi.location.lat;
 
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const originLng = pos.coords.longitude;
-          const originLat = pos.coords.latitude;
+      const geolocate = geolocateRef.current;
+      if (!geolocate) return;
 
-          const token = import.meta.env.VITE_MAPBOX_TOKEN;
-          const url =
-            `https://api.mapbox.com/directions/v5/mapbox/driving/` +
-            `${originLng},${originLat};${destLng},${destLat}` +
-            `?geometries=geojson&overview=full&steps=false&access_token=${token}`;
+      const onGeolocate = async (e) => {
+        geolocate.off("geolocate", onGeolocate);
+        const originLng = e.coords.longitude;
+        const originLat = e.coords.latitude;
 
-          try {
-            const res = await fetch(url);
-            if (!res.ok) throw new Error("Directions API error");
-            const data = await res.json();
-            if (!data.routes || data.routes.length === 0) throw new Error("No route");
+        const token = import.meta.env.VITE_MAPBOX_TOKEN;
+        const url =
+          `https://api.mapbox.com/directions/v5/mapbox/driving/` +
+          `${originLng},${originLat};${destLng},${destLat}` +
+          `?geometries=geojson&overview=full&steps=false&access_token=${token}`;
 
-            const route = data.routes[0];
-            const routeGeo = route.geometry;
+        try {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error("Directions API error");
+          const data = await res.json();
+          if (!data.routes || data.routes.length === 0) throw new Error("No route");
 
-            clearRoute();
+          const route = data.routes[0];
+          const routeGeo = route.geometry;
 
-            m.addSource(ROUTE_SOURCE_ID, {
-              type: "geojson",
-              data: {
-                type: "Feature",
-                geometry: routeGeo,
-                properties: {},
-              },
-            });
+          clearRoute();
 
-            m.addLayer({
-              id: ROUTE_LAYER_ID,
-              type: "line",
-              source: ROUTE_SOURCE_ID,
-              layout: {
-                "line-join": "round",
-                "line-cap": "round",
-              },
-              paint: {
-                "line-color": "#64b5f6",
-                "line-width": 5,
-                "line-opacity": 0.85,
-              },
-            });
+          m.addSource(ROUTE_SOURCE_ID, {
+            type: "geojson",
+            data: {
+              type: "Feature",
+              geometry: routeGeo,
+              properties: {},
+            },
+          });
 
-            routeStateRef.current = { active: true };
+          m.addLayer({
+            id: ROUTE_LAYER_ID,
+            type: "line",
+            source: ROUTE_SOURCE_ID,
+            layout: {
+              "line-join": "round",
+              "line-cap": "round",
+            },
+            paint: {
+              "line-color": "#64b5f6",
+              "line-width": 5,
+              "line-opacity": 0.85,
+            },
+          });
 
-            const coords = routeGeo.coordinates;
-            const bounds = coords.reduce(
-              (b, c) => b.extend(c),
-              new mapboxgl.LngLatBounds(coords[0], coords[0])
-            );
-            m.fitBounds(bounds, {
-              padding: { top: 120, bottom: 120, left: 80, right: 80 },
-              duration: 800,
-            });
+          routeStateRef.current = { active: true };
 
-            const durationMin = Math.round(route.duration / 60);
-            const distanceKm = (route.distance / 1000).toFixed(1);
+          const coords = routeGeo.coordinates;
+          const bounds = coords.reduce(
+            (b, c) => b.extend(c),
+            new mapboxgl.LngLatBounds(coords[0], coords[0])
+          );
+          m.fitBounds(bounds, {
+            padding: { top: 120, bottom: 120, left: 80, right: 80 },
+            duration: 800,
+          });
 
-            setRouteInfo({ durationMin, distanceKm });
+          const durationMin = Math.round(route.duration / 60);
+          const distanceKm = (route.distance / 1000).toFixed(1);
 
-            if (activePopupRef.current) {
-              activePopupRef.current.remove();
-              activePopupRef.current = null;
-            }
-          } catch {
-            setRouteError(
-              lang === "fr"
-                ? "Impossible de calculer l'itinéraire. Veuillez réessayer."
-                : "Could not calculate the route. Please try again."
-            );
+          setRouteInfo({ durationMin, distanceKm });
+
+          if (activePopupRef.current) {
+            activePopupRef.current.remove();
+            activePopupRef.current = null;
           }
-        },
-        () => {
+        } catch {
           setRouteError(
             lang === "fr"
-              ? "Impossible d'obtenir votre position."
-              : "Could not get your location."
+              ? "Impossible de calculer l'itinéraire. Veuillez réessayer."
+              : "Could not calculate the route. Please try again."
           );
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
-      );
+        }
+      };
+
+      const onGeolocateError = () => {
+        geolocate.off("geolocate", onGeolocate);
+        geolocate.off("error", onGeolocateError);
+        setRouteError(
+          lang === "fr"
+            ? "Impossible d'obtenir votre position."
+            : "Could not get your location."
+        );
+      };
+
+      geolocate.on("geolocate", onGeolocate);
+      geolocate.on("error", onGeolocateError);
+      geolocate.trigger();
     },
     [lang, clearRoute]
   );
@@ -217,16 +226,15 @@ export default function MapView({ lang, island }) {
       "top-right"
     );
 
-    map.current.addControl(
-      new mapboxgl.GeolocateControl({
-        positionOptions: {
-          enableHighAccuracy: true,
-        },
-        trackUserLocation: true,
-        showUserHeading: true,
-      }),
-      "top-right"
-    );
+    const geolocate = new mapboxgl.GeolocateControl({
+      positionOptions: {
+        enableHighAccuracy: true,
+      },
+      trackUserLocation: true,
+      showUserHeading: true,
+    });
+    geolocateRef.current = geolocate;
+    map.current.addControl(geolocate, "top-right");
   }, []);
 
   // Switch to offline raster style when offline and tiles are available
