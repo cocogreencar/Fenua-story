@@ -1,6 +1,7 @@
 import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
+import { FileTransfer } from "@capacitor/file-transfer";
 import { Capacitor } from "@capacitor/core";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocsFromServer } from "firebase/firestore";
 import { ref, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../services/firebaseConfig";
 import { detectIslandByLocation, islandBounds } from "../data/islands";
@@ -74,8 +75,7 @@ async function downloadTile(islandId, z, x, y, token) {
       data: base64,
       directory: Directory.Data,
       recursive: true,
-      encoding: Encoding.Base64,
-    });
+      });
     return path;
   } catch (e) {
     console.warn(`Failed to download tile ${z}/${x}/${y}:`, e);
@@ -106,19 +106,20 @@ async function ensureDir(path) {
 }
 
 async function downloadFile(url, islandId, filename) {
-  const response = await fetch(url);
-  const blob = await response.blob();
-  const base64 = await blobToBase64(blob);
   const dir = mediaDir(islandId);
   await ensureDir(dir);
+
   const filePath = `${dir}/${filename}`;
-  await Filesystem.writeFile({
+  const { uri } = await Filesystem.getUri({
     path: filePath,
-    data: base64,
     directory: Directory.Data,
-    recursive: true,
-    encoding: Encoding.Base64,
   });
+
+  await FileTransfer.downloadFile({
+    url,
+    path: uri,
+  });
+
   return filePath;
 }
 
@@ -139,8 +140,25 @@ function sanitizeFilename(str) {
   return str.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
+function extractMediaUrl(value) {
+  if (!value || typeof value !== "string") return null;
+
+  const trimmed = value.trim();
+  const markdownMatch = trimmed.match(/^\[(https?:\/\/[^\]]+)\]\((https?:\/\/[^)]+)\)$/);
+
+  if (markdownMatch) {
+    return markdownMatch[1];
+  }
+
+  if (/^https?:\/\//.test(trimmed)) {
+    return trimmed;
+  }
+
+  return null;
+}
+
 async function getIslandPois(islandId) {
-  const snapshot = await getDocs(collection(db, "pois"));
+  const snapshot = await getDocsFromServer(collection(db, "pois"));
   return snapshot.docs
     .map((doc) => ({ id: doc.id, ...doc.data() }))
     .filter((poi) => {
@@ -155,6 +173,8 @@ async function getIslandPois(islandId) {
 
 export async function downloadIsland(islandId) {
   const pois = await getIslandPois(islandId);
+  if (pois.length === 0) {
+    throw new Error(`No POIs found for island: ${islandId}`);  }
   const manifest = {
     islandId,
     downloadedAt: new Date().toISOString(),
@@ -169,9 +189,9 @@ export async function downloadIsland(islandId) {
     // Download image
     if (poi.imgUrl) {
       try {
-        const imageRef = ref(storage, poi.imgUrl);
-        const url = await getDownloadURL(imageRef);
-        const ext = poi.imgUrl.split(".").pop().split("?")[0] || "jpg";
+        const url = extractMediaUrl(poi.imgUrl);
+        if (!url) throw new Error("Invalid image URL");
+        const ext = url.split(".").pop().split("?")[0] || "jpg";
         const filename = `${sanitizeFilename(poi.id)}_img.${ext}`;
         const localPath = await downloadFile(url, islandId, filename);
         entry.localImage = localPath;
@@ -186,9 +206,9 @@ export async function downloadIsland(islandId) {
       const audioPath = poi.audio?.[lang];
       if (audioPath) {
         try {
-          const audioRef = ref(storage, audioPath);
-          const url = await getDownloadURL(audioRef);
-          const ext = audioPath.split(".").pop().split("?")[0] || "mp3";
+          const url = extractMediaUrl(audioPath);
+          if (!url) throw new Error("Invalid audio URL");
+          const ext = url.split(".").pop().split("?")[0] || "mp3";
           const filename = `${sanitizeFilename(poi.id)}_audio_${lang}.${ext}`;
           const localPath = await downloadFile(url, islandId, filename);
           entry.localAudio[lang] = localPath;

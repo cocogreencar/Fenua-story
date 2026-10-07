@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { useState, useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
+import { Filesystem, Directory } from "@capacitor/filesystem";
 import AudioPlayer from "./AudioPlayer";
 import { ref, getDownloadURL } from "firebase/storage";
 import { storage } from "../services/firebaseConfig";
@@ -33,19 +34,31 @@ export default function PopupContent({ poi, lang, onClose, onDirections }) {
 
   // Load image and audio: prefer local offline files, fall back to Firebase
   useEffect(() => {
-    if (poi.localImage) {
-      setImageUrl(Capacitor.convertFileSrc(poi.localImage));
-    } else if (poi.imgUrl) {
-      const imageRef = ref(storage, poi.imgUrl);
-      getDownloadURL(imageRef).then(setImageUrl);
-    }
+    const loadMedia = async () => {
+      if (poi.localImage) {
+        const { uri } = await Filesystem.getUri({
+          path: poi.localImage,
+          directory: Directory.Data,
+        });
+        setImageUrl(Capacitor.convertFileSrc(uri));
+      } else if (poi.imgUrl) {
+        const imageRef = ref(storage, poi.imgUrl);
+        getDownloadURL(imageRef).then(setImageUrl);
+      }
 
-    if (poi.localAudio?.[lang]) {
-      setAudioUrl(Capacitor.convertFileSrc(poi.localAudio[lang]));
-    } else if (poi.audio?.[lang]) {
-      const audioRef = ref(storage, poi.audio?.[lang]);
-      getDownloadURL(audioRef).then(setAudioUrl);
-    }
+      if (poi.localAudio?.[lang]) {
+        const { uri } = await Filesystem.getUri({
+          path: poi.localAudio[lang],
+          directory: Directory.Data,
+        });
+        setAudioUrl(Capacitor.convertFileSrc(uri));
+      } else if (poi.audio?.[lang]) {
+        const audioRef = ref(storage, poi.audio?.[lang]);
+        getDownloadURL(audioRef).then(setAudioUrl);
+      }
+    };
+
+    loadMedia();
   }, [poi, lang]);
 
   return (
