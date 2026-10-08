@@ -11,6 +11,11 @@ import {
   IconButton,
   TextField,
   InputAdornment,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Divider,
 } from "@mui/material";
 import WbSunnyIcon from "@mui/icons-material/WbSunny";
 import CurrencyExchangeIcon from "@mui/icons-material/CurrencyExchange";
@@ -24,6 +29,9 @@ import DirectionsBoatIcon from "@mui/icons-material/DirectionsBoat";
 
 import CloseIcon from "@mui/icons-material/Close";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
+import LanguageIcon from "@mui/icons-material/Language";
+import InfoIcon from "@mui/icons-material/Info";
+import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 import BottomNav from "../components/BottomNav";
 import WeatherCard from "../components/WeatherCard";
@@ -35,7 +43,8 @@ import EmergencyPanel from "../components/EmergencyPanel";
 import GoodToKnowPanel from "../components/GoodToKnowPanel";
 
 export default function PracticalPage() {
-  const { lang } = useLanguage();
+  const { lang, toggleLang } = useLanguage();
+  const navigate = useNavigate();
   const [selectedIsland, setSelectedIsland] = useState("moorea");
   const [converterOpen, setConverterOpen] = useState(false);
   const [nearbyOpen, setNearbyOpen] = useState(false);
@@ -268,6 +277,96 @@ export default function PracticalPage() {
         open={goodToKnowOpen}
         onClose={() => setGoodToKnowOpen(false)}
       />
+
+      {/* More section (integrated from MorePage) */}
+      <Fade in timeout={1000}>
+        <Box sx={{ mt: 4, maxWidth: 600 }}>
+          <Typography
+            sx={{
+              color: "#ffffff",
+              fontWeight: 700,
+              fontSize: { xs: "1.3rem", sm: "1.6rem" },
+              mb: 3,
+              letterSpacing: 0.5,
+            }}
+          >
+            {lang === "fr" ? "Plus" : "More"}
+          </Typography>
+          <Box
+            sx={{
+              borderRadius: 3,
+              overflow: "hidden",
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.08)",
+            }}
+          >
+            <List sx={{ p: 0 }}>
+              {[
+                {
+                  icon: <LanguageIcon sx={{ color: "#64b5f6" }} />,
+                  label: lang === "fr" ? "Langue" : "Language",
+                  value: lang === "fr" ? "Français" : "English",
+                  onClick: toggleLang,
+                },
+                {
+                  icon: <InfoIcon sx={{ color: "#64b5f6" }} />,
+                  label:
+                    lang === "fr"
+                      ? "À propos de Fenua Stories"
+                      : "About Fenua Stories",
+                  value: "",
+                  onClick: () => navigate("/about"),
+                },
+              ].map((entry, idx, arr) => (
+                <Box key={idx}>
+                  <ListItem
+                    onClick={entry.onClick}
+                    sx={{
+                      cursor: entry.onClick ? "pointer" : "default",
+                      py: 2,
+                      px: 3,
+                      transition: "background 0.2s ease",
+                      "&:hover": entry.onClick
+                        ? { background: "rgba(255,255,255,0.05)" }
+                        : {},
+                    }}
+                  >
+                    <ListItemIcon sx={{ minWidth: 40 }}>{entry.icon}</ListItemIcon>
+                    <ListItemText
+                      primary={
+                        <Typography
+                          sx={{
+                            color: "#ffffff",
+                            fontWeight: 500,
+                            fontSize: "0.95rem",
+                          }}
+                        >
+                          {entry.label}
+                        </Typography>
+                      }
+                      secondary={
+                        entry.value ? (
+                          <Typography
+                            sx={{
+                              color: "rgba(255,255,255,0.4)",
+                              fontSize: "0.8rem",
+                            }}
+                          >
+                            {entry.value}
+                          </Typography>
+                        ) : null
+                      }
+                    />
+                  </ListItem>
+                  {idx < arr.length - 1 && (
+                    <Divider sx={{ borderColor: "rgba(255,255,255,0.06)" }} />
+                  )}
+                </Box>
+              ))}
+            </List>
+          </Box>
+        </Box>
+      </Fade>
 
       <BottomNav />
     </Box>

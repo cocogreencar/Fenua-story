@@ -2,8 +2,8 @@ import { BottomNavigation, BottomNavigationAction, Box } from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import ExploreIcon from "@mui/icons-material/Explore";
 import CardMembershipIcon from "@mui/icons-material/CardMembership";
-import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import HandymanIcon from "@mui/icons-material/Handyman";
+import LuggageIcon from "@mui/icons-material/Luggage";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function BottomNav() {
@@ -23,22 +23,22 @@ export default function BottomNav() {
       path: "/badge",
     },
     {
+      label: lang === "fr" ? "Mon séjour" : "My trip",
+      icon: <LuggageIcon />,
+      path: "/mon-sejour",
+    },
+    {
       label: lang === "fr" ? "Pratique" : "Practical",
       icon: <HandymanIcon />,
       path: "/practical",
-    },
-    {
-      label: lang === "fr" ? "Plus" : "More",
-      icon: <MoreHorizIcon />,
-      path: "/more",
     },
   ];
 
   const currentTab = (() => {
     if (location.pathname === "/") return 0;
     if (location.pathname === "/badge") return 1;
-    if (location.pathname === "/practical") return 2;
-    if (location.pathname === "/more") return 3;
+    if (location.pathname === "/mon-sejour") return 2;
+    if (location.pathname === "/practical") return 3;
     return 0;
   })();
 
