@@ -8,10 +8,13 @@ import {
   Button,
   TextField,
   LinearProgress,
+  Modal,
+  IconButton,
 } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import CloseIcon from "@mui/icons-material/Close";
 import { useLanguage } from "../context/LanguageContext";
 import BottomNav from "../components/BottomNav";
 
@@ -45,7 +48,52 @@ const transportOptions = [
   { id: "pied", label: { fr: "Sans véhicule", en: "No vehicle" }, emoji: "🚶" },
 ];
 
-const TOTAL_STEPS = 5;
+const interestOptions = [
+  { id: "plages", label: { fr: "Plages et lagons", en: "Beaches and lagoons" }, emoji: "🏖️" },
+  { id: "snorkeling", label: { fr: "Snorkeling", en: "Snorkeling" }, emoji: "🤿" },
+  { id: "nature", label: { fr: "Nature", en: "Nature" }, emoji: "🌿" },
+  { id: "randonnees", label: { fr: "Randonnées", en: "Hiking" }, emoji: "🥾" },
+  { id: "culture", label: { fr: "Culture et histoire", en: "Culture and history" }, emoji: "🏛️" },
+  { id: "paysages", label: { fr: "Paysages et photos", en: "Landscapes and photos" }, emoji: "📸" },
+  { id: "gastronomie", label: { fr: "Gastronomie", en: "Food and dining" }, emoji: "🍽️" },
+  { id: "detente", label: { fr: "Détente", en: "Relaxation" }, emoji: "😌" },
+  { id: "marches", label: { fr: "Marchés et shopping", en: "Markets and shopping" }, emoji: "🛍️" },
+  { id: "incontournables", label: { fr: "Les incontournables", en: "Must-sees" }, emoji: "⭐" },
+  { id: "lever-soleil", label: { fr: "Lever de soleil", en: "Sunrise" }, emoji: "🌅" },
+  { id: "coucher-soleil", label: { fr: "Coucher de soleil", en: "Sunset" }, emoji: "🌇" },
+];
+
+const paceOptions = [
+  {
+    id: "tranquille",
+    label: { fr: "Tranquille", en: "Relaxed" },
+    description: {
+      fr: "Prendre son temps et profiter de chaque endroit.",
+      en: "Take your time and enjoy every spot.",
+    },
+    emoji: "🐢",
+  },
+  {
+    id: "equilibre",
+    label: { fr: "Équilibré", en: "Balanced" },
+    description: {
+      fr: "Un bon mélange de découvertes et de détente.",
+      en: "A good mix of discovery and relaxation.",
+    },
+    emoji: "⚖️",
+  },
+  {
+    id: "intensif",
+    label: { fr: "J'en veux un maximum !", en: "I want the most!" },
+    description: {
+      fr: "Profiter de chaque journée pour découvrir un maximum de choses.",
+      en: "Make the most of each day to discover as much as possible.",
+    },
+    emoji: "🚀",
+  },
+];
+
+const TOTAL_STEPS = 7;
 
 const pageBackground = {
   minHeight: "100vh",
@@ -122,6 +170,9 @@ const backButtonSx = {
   },
 };
 
+const cocoGreenCarUrl = (lang) =>
+  lang === "fr" ? "https://www.cocogreencar.com/" : "https://www.cocogreencar.com/en";
+
 export default function MonSejourPage() {
   const { lang } = useLanguage();
 
@@ -131,10 +182,32 @@ export default function MonSejourPage() {
   const [customDays, setCustomDays] = useState("");
   const [companions, setCompanions] = useState(null);
   const [transport, setTransport] = useState(null);
+  const [interests, setInterests] = useState([]);
+  const [pace, setPace] = useState(null);
+  const [cocoPopupShown, setCocoPopupShown] = useState(false);
+  const [cocoPopupOpen, setCocoPopupOpen] = useState(false);
 
   const t = (fr, en) => (lang === "fr" ? fr : en);
 
   const progress = ((step + 1) / TOTAL_STEPS) * 100;
+
+  const toggleInterest = (id) => {
+    setInterests((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleTransportSelect = (id) => {
+    setTransport(id);
+    if (
+      id === "pied" &&
+      island === "moorea" &&
+      !cocoPopupShown
+    ) {
+      setCocoPopupOpen(true);
+      setCocoPopupShown(true);
+    }
+  };
 
   const canContinue = () => {
     if (step === 0) return !!island;
@@ -148,12 +221,27 @@ export default function MonSejourPage() {
     }
     if (step === 2) return !!companions;
     if (step === 3) return !!transport;
+    if (step === 4) return interests.length > 0;
+    if (step === 5) return !!pace;
     return true;
   };
 
   const handleBack = () => setStep((s) => Math.max(0, s - 1));
   const handleContinue = () => {
     if (step < TOTAL_STEPS - 1) setStep((s) => s + 1);
+  };
+
+  const resetAll = () => {
+    setStep(0);
+    setIsland(null);
+    setDuration(null);
+    setCustomDays("");
+    setCompanions(null);
+    setTransport(null);
+    setInterests([]);
+    setPace(null);
+    setCocoPopupShown(false);
+    setCocoPopupOpen(false);
   };
 
   const renderProgress = () => (
@@ -451,7 +539,7 @@ export default function MonSejourPage() {
             return (
               <Card
                 key={opt.id}
-                onClick={() => setTransport(opt.id)}
+                onClick={() => handleTransportSelect(opt.id)}
                 sx={selectableCardSx(isSelected)}
               >
                 <CardContent
@@ -482,6 +570,7 @@ export default function MonSejourPage() {
         </Box>
       </Fade>
 
+      {/* Existing Coco Green Car promotional reminder (kept) */}
       {island === "moorea" && (
         <Fade in timeout={600}>
           <Box
@@ -506,7 +595,7 @@ export default function MonSejourPage() {
             </Typography>
             <Box
               component="a"
-              href={lang === "fr" ? "https://www.cocogreencar.com/" : "https://www.cocogreencar.com/en"}
+              href={cocoGreenCarUrl(lang)}
               target="_blank"
               rel="noopener noreferrer"
               sx={{
@@ -528,10 +617,279 @@ export default function MonSejourPage() {
           </Box>
         </Fade>
       )}
+
+      {/* Coco Green Car promotional popup (additional) */}
+      <Modal
+        open={cocoPopupOpen}
+        onClose={() => setCocoPopupOpen(false)}
+        closeAfterTransition
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          px: 3,
+        }}
+      >
+        <Fade in={cocoPopupOpen} timeout={300}>
+          <Box
+            sx={{
+              maxWidth: 400,
+              width: "100%",
+              borderRadius: 4,
+              p: 4,
+              background: "linear-gradient(160deg, #0d2845 0%, #103a5c 100%)",
+              border: "1px solid rgba(76, 175, 80, 0.3)",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+              position: "relative",
+            }}
+          >
+            <IconButton
+              onClick={() => setCocoPopupOpen(false)}
+              sx={{
+                position: "absolute",
+                top: 12,
+                right: 12,
+                color: "rgba(255,255,255,0.4)",
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+
+            <Typography
+              sx={{
+                color: "#ffffff",
+                fontWeight: 700,
+                fontSize: "1.2rem",
+                mb: 2,
+                pr: 4,
+              }}
+            >
+              {t("🚗 Et si vous louiez une voiture ?", "🚗 How about renting a car?")}
+            </Typography>
+
+            <Typography
+              sx={{
+                color: "rgba(255,255,255,0.65)",
+                fontSize: "0.9rem",
+                lineHeight: 1.6,
+                mb: 3,
+              }}
+            >
+              {t(
+                "Pour explorer Moorea librement et profiter pleinement de votre séjour, découvrez les véhicules de Coco Green Car.",
+                "Explore Moorea freely and make the most of your stay with Coco Green Car."
+              )}
+            </Typography>
+
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+              <Button
+                component="a"
+                href={cocoGreenCarUrl(lang)}
+                target="_blank"
+                rel="noopener noreferrer"
+                fullWidth
+                sx={{
+                  borderRadius: 3,
+                  py: 1.5,
+                  fontWeight: 600,
+                  fontSize: "0.95rem",
+                  textTransform: "none",
+                  background: "linear-gradient(135deg, #43a047, #66bb6a)",
+                  color: "#ffffff",
+                  transition: "transform 0.2s ease",
+                  "&:hover": {
+                    background: "linear-gradient(135deg, #388e3c, #4caf50)",
+                    transform: "translateY(-2px)",
+                  },
+                }}
+              >
+                {t("Voir les véhicules", "View vehicles")}
+              </Button>
+              <Button
+                onClick={() => setCocoPopupOpen(false)}
+                fullWidth
+                sx={{
+                  borderRadius: 3,
+                  py: 1.5,
+                  fontWeight: 600,
+                  fontSize: "0.95rem",
+                  textTransform: "none",
+                  background: "rgba(255,255,255,0.05)",
+                  color: "rgba(255,255,255,0.6)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  "&:hover": {
+                    background: "rgba(255,255,255,0.1)",
+                  },
+                }}
+              >
+                {t("Continuer sans véhicule", "Continue without a vehicle")}
+              </Button>
+            </Box>
+          </Box>
+        </Fade>
+      </Modal>
     </>
   );
 
-  // ---- Step 4: Summary ----
+  // ---- Step 4: Travel interests ----
+  const renderInterestsStep = () => (
+    <>
+      <Fade in timeout={600}>
+        <Typography
+          sx={{
+            color: "#ffffff",
+            fontWeight: 700,
+            fontSize: { xs: "1.4rem", sm: "1.6rem" },
+            mb: 1,
+            letterSpacing: 0.5,
+          }}
+        >
+          {t("Qu'as-tu envie de découvrir ?", "What do you want to discover?")}
+        </Typography>
+      </Fade>
+      <Fade in timeout={700}>
+        <Typography
+          sx={{
+            color: "rgba(255,255,255,0.55)",
+            fontSize: "0.9rem",
+            mb: 4,
+            maxWidth: 480,
+          }}
+        >
+          {t(
+            "Sélectionne tout ce qui te fait envie.",
+            "Select everything that appeals to you."
+          )}
+        </Typography>
+      </Fade>
+      <Fade in timeout={800}>
+        <Box
+          sx={{
+            ...sectionStyle,
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr 1fr", sm: "1fr 1fr 1fr" },
+            gap: { xs: 1, sm: 1.5 },
+          }}
+        >
+          {interestOptions.map((opt) => {
+            const isSelected = interests.includes(opt.id);
+            return (
+              <Card
+                key={opt.id}
+                onClick={() => toggleInterest(opt.id)}
+                sx={selectableCardSx(isSelected)}
+              >
+                <CardContent
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 0.75,
+                    py: 2,
+                    px: 1.5,
+                    minHeight: 90,
+                    justifyContent: "center",
+                  }}
+                >
+                  <Typography sx={{ fontSize: "1.5rem" }}>{opt.emoji}</Typography>
+                  <Typography
+                    sx={{
+                      color: "#ffffff",
+                      fontWeight: 600,
+                      fontSize: { xs: "0.75rem", sm: "0.82rem" },
+                      textAlign: "center",
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {opt.label[lang]}
+                  </Typography>
+                  {isSelected && (
+                    <CheckCircleIcon sx={{ color: "#64b5f6", fontSize: 18, mt: 0.25 }} />
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </Box>
+      </Fade>
+    </>
+  );
+
+  // ---- Step 5: Travel pace ----
+  const renderPaceStep = () => (
+    <>
+      <Fade in timeout={600}>
+        <Typography
+          sx={{
+            color: "#ffffff",
+            fontWeight: 700,
+            fontSize: { xs: "1.4rem", sm: "1.6rem" },
+            mb: 4,
+            letterSpacing: 0.5,
+          }}
+        >
+          {t(
+            "À quel rythme veux-tu découvrir l'île ?",
+            "At what pace do you want to explore the island?"
+          )}
+        </Typography>
+      </Fade>
+      <Fade in timeout={800}>
+        <Box sx={sectionStyle}>
+          {paceOptions.map((opt) => {
+            const isSelected = pace === opt.id;
+            return (
+              <Card
+                key={opt.id}
+                onClick={() => setPace(opt.id)}
+                sx={selectableCardSx(isSelected)}
+              >
+                <CardContent
+                  sx={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 2,
+                    py: 2.5,
+                    px: 3,
+                  }}
+                >
+                  <Typography sx={{ fontSize: "1.8rem", lineHeight: 1, flexShrink: 0 }}>
+                    {opt.emoji}
+                  </Typography>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      sx={{
+                        color: "#ffffff",
+                        fontWeight: 600,
+                        fontSize: { xs: "0.95rem", sm: "1.05rem" },
+                        mb: 0.5,
+                      }}
+                    >
+                      {opt.label[lang]}
+                    </Typography>
+                    <Typography
+                      sx={{
+                        color: "rgba(255,255,255,0.5)",
+                        fontSize: { xs: "0.8rem", sm: "0.85rem" },
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {opt.description[lang]}
+                    </Typography>
+                  </Box>
+                  {isSelected && (
+                    <CheckCircleIcon sx={{ color: "#64b5f6", fontSize: 24, flexShrink: 0, mt: 0.5 }} />
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </Box>
+      </Fade>
+    </>
+  );
+
+  // ---- Step 6: Summary ----
   const renderSummaryStep = () => {
     const islandName = islandOptions.find((i) => i.id === island)?.name[lang];
     const durationLabel =
@@ -540,6 +898,10 @@ export default function MonSejourPage() {
         : durationOptions.find((d) => d.value === duration)?.label[lang];
     const companionLabel = companionOptions.find((c) => c.id === companions)?.label[lang];
     const transportOpt = transportOptions.find((t2) => t2.id === transport);
+    const paceOpt = paceOptions.find((p) => p.id === pace);
+    const selectedInterestLabels = interests
+      .map((id) => interestOptions.find((o) => o.id === id)?.label[lang])
+      .filter(Boolean);
 
     const summaryItems = [
       { label: t("Île", "Island"), value: islandName, emoji: islandOptions.find((i) => i.id === island)?.emoji },
@@ -605,6 +967,100 @@ export default function MonSejourPage() {
               </Box>
             ))}
 
+            {/* Interests summary */}
+            <Box
+              sx={{
+                borderRadius: 3,
+                p: 3,
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
+            >
+              <Typography
+                sx={{
+                  color: "rgba(255,255,255,0.45)",
+                  fontSize: "0.75rem",
+                  fontWeight: 500,
+                  textTransform: "uppercase",
+                  letterSpacing: 0.5,
+                  mb: 1.5,
+                }}
+              >
+                {t("Centres d'intérêt", "Interests")}
+              </Typography>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                {selectedInterestLabels.map((label, idx) => (
+                  <Box
+                    key={idx}
+                    sx={{
+                      borderRadius: 2,
+                      px: 2,
+                      py: 0.75,
+                      background: "rgba(100,181,246,0.1)",
+                      border: "1px solid rgba(100,181,246,0.2)",
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        color: "#64b5f6",
+                        fontWeight: 500,
+                        fontSize: "0.82rem",
+                      }}
+                    >
+                      {label}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+
+            {/* Pace summary */}
+            <Box
+              sx={{
+                borderRadius: 3,
+                p: 3,
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
+              <Typography sx={{ fontSize: "1.5rem" }}>{paceOpt?.emoji}</Typography>
+              <Box>
+                <Typography
+                  sx={{
+                    color: "rgba(255,255,255,0.45)",
+                    fontSize: "0.75rem",
+                    fontWeight: 500,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.5,
+                    mb: 0.5,
+                  }}
+                >
+                  {t("Rythme", "Pace")}
+                </Typography>
+                <Typography
+                  sx={{
+                    color: "#ffffff",
+                    fontWeight: 600,
+                    fontSize: { xs: "1rem", sm: "1.1rem" },
+                  }}
+                >
+                  {paceOpt?.label[lang]}
+                </Typography>
+                <Typography
+                  sx={{
+                    color: "rgba(255,255,255,0.45)",
+                    fontSize: "0.8rem",
+                    mt: 0.5,
+                  }}
+                >
+                  {paceOpt?.description[lang]}
+                </Typography>
+              </Box>
+            </Box>
+
             <Box
               sx={{
                 mt: 2,
@@ -636,20 +1092,7 @@ export default function MonSejourPage() {
             <Button onClick={handleBack} startIcon={<ArrowBackIcon />} sx={backButtonSx}>
               {t("Retour", "Back")}
             </Button>
-            <Button
-              onClick={() => {
-                setStep(0);
-                setIsland(null);
-                setDuration(null);
-                setCustomDays("");
-                setCompanions(null);
-                setTransport(null);
-              }}
-              sx={{
-                ...backButtonSx,
-                mt: 4,
-              }}
-            >
+            <Button onClick={resetAll} sx={{ ...backButtonSx }}>
               {t("Recommencer", "Start over")}
             </Button>
           </Box>
@@ -663,6 +1106,8 @@ export default function MonSejourPage() {
     renderDurationStep,
     renderCompanionsStep,
     renderTransportStep,
+    renderInterestsStep,
+    renderPaceStep,
     renderSummaryStep,
   ];
 
