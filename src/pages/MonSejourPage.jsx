@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   Box,
   Typography,
   Fade,
   Card,
   CardContent,
+  CardMedia,
   Button,
   TextField,
   LinearProgress,
@@ -16,6 +17,7 @@ import {
   Select,
   MenuItem,
   Divider,
+  CircularProgress,
 } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -26,11 +28,20 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import RestaurantIcon from "@mui/icons-material/Restaurant";
 import EventIcon from "@mui/icons-material/Event";
+import DirectionsIcon from "@mui/icons-material/Directions";
+import PlaceIcon from "@mui/icons-material/Place";
+import ExploreIcon from "@mui/icons-material/Explore";
 import { useLanguage } from "../context/LanguageContext";
 import BottomNav from "../components/BottomNav";
+import usePOIs from "../hooks/usePOIs";
+import { generateItinerary, getNavigationUrl } from "../services/itineraryEngine";
+import { usePoiImage } from "../hooks/usePoiImage";
+import { saveSejour, loadSejour, clearSejour } from "../services/sejourStorage";
 
-// Configuration placeholder — replace with the real Google Play URL when available
-const SUNSET_PARADISE_URL = null;
+// Replace with the real Google Play URL when the app is published
+const SUNSET_PARADISE_PLAY_URL = "https://play.google.com/store/apps/details?id=com.polynesiaapps.sunsetparadise";
+const SUNSET_PARADISE_WEBSITE_URL = "https://sunsetparadise-tahiti.com";
+const SUNSET_PARADISE_URL = SUNSET_PARADISE_PLAY_URL || SUNSET_PARADISE_WEBSITE_URL;
 
 const islandOptions = [
   { id: "tahiti", name: { fr: "Tahiti", en: "Tahiti" }, emoji: "🏝️" },
@@ -231,10 +242,97 @@ export default function MonSejourPage() {
   const [editingActivity, setEditingActivity] = useState(null);
   const [cocoPopupShown, setCocoPopupShown] = useState(false);
   const [cocoPopupOpen, setCocoPopupOpen] = useState(false);
+  const [itinerary, setItinerary] = useState(null);
+  const [showItinerary, setShowItinerary] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [restoredTrip, setRestoredTrip] = useState(false);
+  const isRestoring = useRef(true);
 
   const t = (fr, en) => (lang === "fr" ? fr : en);
 
+  // Restore saved trip on mount
+  useEffect(() => {
+    const saved = loadSejour();
+    if (saved) {
+      setIsland(saved.island ?? null);
+      setDuration(saved.duration ?? null);
+      setCustomDays(saved.customDays ?? "");
+      setCompanions(saved.companions ?? null);
+      setTransport(saved.transport ?? null);
+      setInterests(saved.interests ?? []);
+      setPace(saved.pace ?? null);
+      setIncludeRestaurants(saved.includeRestaurants ?? true);
+      setActivities(saved.activities ?? []);
+      if (saved.itinerary) {
+        setItinerary(saved.itinerary);
+        setShowItinerary(true);
+      } else if (saved.step != null) {
+        setStep(saved.step);
+      }
+      if (saved.island) setRestoredTrip(true);
+    }
+    isRestoring.current = false;
+  }, []);
+
+  // Auto-save whenever relevant state changes (but skip the initial restore)
+  useEffect(() => {
+    if (isRestoring.current) return;
+    if (!island && !itinerary) {
+      clearSejour();
+      return;
+    }
+    saveSejour({
+      step,
+      island,
+      duration,
+      customDays,
+      companions,
+      transport,
+      interests,
+      pace,
+      includeRestaurants,
+      activities,
+      itinerary,
+    });
+  }, [step, island, duration, customDays, companions, transport, interests, pace, includeRestaurants, activities, itinerary]);
+
   const actualDuration = duration === 7 ? (parseInt(customDays, 10) || 7) : duration;
+
+  const { pois } = usePOIs(island);
+
+  const questionnaireAnswers = useMemo(
+    () => ({
+      island,
+      duration: actualDuration,
+      companions,
+      transport,
+      interests,
+      pace,
+      includeRestaurants,
+      reservations: activities.map((a) => ({
+        id: a.id,
+        name: a.name,
+        day: a.day,
+        startTime: a.startTime,
+        endTime: a.endTime,
+        location: a.location,
+        notes: a.notes,
+      })),
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [island, actualDuration, companions, transport, interests, pace, includeRestaurants, activities]
+  );
+
+  const handleGenerateItinerary = () => {
+    setGenerating(true);
+    setTimeout(() => {
+      const result = generateItinerary(pois, questionnaireAnswers);
+      setItinerary(result);
+      setShowItinerary(true);
+      setGenerating(false);
+    }, 50);
+  };
 
   const progress = ((step + 1) / TOTAL_STEPS) * 100;
 
@@ -277,6 +375,15 @@ export default function MonSejourPage() {
   };
 
   const resetAll = () => {
+    if (island || itinerary) {
+      setResetConfirmOpen(true);
+      return;
+    }
+    doReset();
+  };
+
+  const doReset = () => {
+    clearSejour();
     setStep(0);
     setIsland(null);
     setDuration(null);
@@ -290,6 +397,11 @@ export default function MonSejourPage() {
     setEditingActivity(null);
     setCocoPopupShown(false);
     setCocoPopupOpen(false);
+    setItinerary(null);
+    setShowItinerary(false);
+    setGenerating(false);
+    setRestoredTrip(false);
+    setResetConfirmOpen(false);
   };
 
   const renderProgress = () => (
@@ -1057,9 +1169,24 @@ export default function MonSejourPage() {
             </Box>
 
             <Box sx={{ mt: 2, p: 3, borderRadius: 3, textAlign: "center", background: "rgba(100,181,246,0.08)", border: "1px solid rgba(100,181,246,0.2)" }}>
-              <Typography sx={{ color: "rgba(255,255,255,0.7)", fontSize: "0.9rem", lineHeight: 1.6 }}>
-                {t("Votre séjour se prépare bientôt.", "Your trip is being prepared soon.")}
+              <Typography sx={{ color: "rgba(255,255,255,0.7)", fontSize: "0.9rem", lineHeight: 1.6, mb: 2 }}>
+                {t("Prêt à générer ton programme personnalisé ?", "Ready to generate your personalized itinerary?")}
               </Typography>
+              <Button
+                onClick={handleGenerateItinerary}
+                disabled={generating}
+                startIcon={generating ? <CircularProgress size={18} sx={{ color: "#fff" }} /> : <ExploreIcon />}
+                sx={{
+                  borderRadius: 3, px: 4, py: 1.5, fontWeight: 600, fontSize: "0.95rem", textTransform: "none",
+                  background: "linear-gradient(135deg, #1976d2, #42a5f5)", color: "#ffffff",
+                  "&:hover": { background: "linear-gradient(135deg, #1565c0, #1e88e5)" },
+                  "&:disabled": { background: "rgba(255,255,255,0.08)" },
+                }}
+              >
+                {generating
+                  ? t("Génération…", "Generating…")
+                  : t("Générer mon programme", "Generate my itinerary")}
+              </Button>
             </Box>
           </Box>
         </Fade>
@@ -1078,6 +1205,265 @@ export default function MonSejourPage() {
     );
   };
 
+  // ---- Itinerary Display ----
+  const renderItineraryStep = () => {
+    if (!itinerary) return null;
+
+    const periodLabel = (period) =>
+      period === "morning"
+        ? t("Matin", "Morning")
+        : period === "afternoon"
+          ? t("Après-midi", "Afternoon")
+          : period === "lunch"
+            ? t("Déjeuner", "Lunch")
+            : "";
+
+    const slotTypeLabel = (slot) => {
+      if (slot.type === "sunrise") return t("Lever de soleil", "Sunrise");
+      if (slot.type === "sunset") return t("Coucher de soleil", "Sunset");
+      if (slot.type === "free") return t("Journée libre", "Free day");
+      return "";
+    };
+
+    const slotEmoji = (slot) => {
+      if (slot.type === "sunrise") return "🌅";
+      if (slot.type === "sunset") return "🌇";
+      if (slot.type === "free") return "🏖️";
+      if (slot.type === "reservation") return "📅";
+      if (slot.type === "restaurant") return "🍽️";
+      if (slot.type === "visit") return slot.period === "morning" ? "☀️" : "🌤️";
+      return "";
+    };
+
+    const dayCardSx = {
+      borderRadius: 3,
+      background: "rgba(255,255,255,0.05)",
+      border: "1px solid rgba(255,255,255,0.08)",
+      overflow: "hidden",
+    };
+
+    const dayHeaderSx = {
+      px: 2.5, py: 1.5,
+      background: "linear-gradient(90deg, rgba(25,118,210,0.15), rgba(66,165,245,0.08))",
+      borderBottom: "1px solid rgba(255,255,255,0.08)",
+    };
+
+    const slotBoxSx = {
+      display: "flex", gap: 1.5, px: 2, py: 1.5,
+      borderBottom: "1px solid rgba(255,255,255,0.04)",
+      "&:last-child": { borderBottom: "none" },
+    };
+
+    return (
+      <>
+        <Fade in timeout={600}>
+          <Typography
+            sx={{ color: "#ffffff", fontWeight: 700, fontSize: { xs: "1.4rem", sm: "1.6rem" }, mb: 1, letterSpacing: 0.5 }}
+          >
+            {t("Ton programme", "Your itinerary")}
+          </Typography>
+        </Fade>
+        <Fade in timeout={700}>
+          <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", mb: 3, maxWidth: 480 }}>
+            {t(
+              "Voici ton séjour jour par jour. Utilise le bouton itinéraire pour t'y rendre.",
+              "Here's your day-by-day trip. Use the directions button to navigate there."
+            )}
+          </Typography>
+        </Fade>
+
+        <Fade in timeout={800}>
+          <Box sx={{ ...sectionStyle, gap: 2 }}>
+            {itinerary.days.map((day) => (
+              <Card key={day.day} sx={dayCardSx}>
+                {/* Day header */}
+                <Box sx={dayHeaderSx}>
+                  <Typography sx={{ color: "#64b5f6", fontWeight: 700, fontSize: "0.9rem" }}>
+                    {t("Jour", "Day")} {day.day}
+                  </Typography>
+                </Box>
+
+                {/* Slots */}
+                {day.slots.map((slot, sIdx) => {
+                  const emoji = slotEmoji(slot);
+                  const label = slotTypeLabel(slot);
+
+                  // Free day slot
+                  if (slot.type === "free") {
+                    return (
+                      <Box key={sIdx} sx={slotBoxSx}>
+                        <Typography sx={{ fontSize: "1.3rem" }}>{emoji}</Typography>
+                        <Box>
+                          <Typography sx={{ color: "rgba(255,255,255,0.5)", fontWeight: 500, fontSize: "0.85rem" }}>
+                            {label}
+                          </Typography>
+                          <Typography sx={{ color: "rgba(255,255,255,0.35)", fontSize: "0.78rem", mt: 0.25 }}>
+                            {t("Profite de ton île à ton rythme.", "Enjoy your island at your own pace.")}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    );
+                  }
+
+                  // Sunrise/sunset info slot — Sunset Paradise Tahiti promo card
+                  if (slot.type === "sunrise" || slot.type === "sunset") {
+                    const isSunrise = slot.type === "sunrise";
+                    const promoImg = isSunrise ? "sunrise-tahiti.webp" : "sunset-tahiti.webp";
+                    return (
+                      <Box key={sIdx} sx={{ p: 0 }}>
+                        <Box sx={{
+                          position: "relative",
+                          width: "100%",
+                          height: 140,
+                          overflow: "hidden",
+                        }}>
+                          <Box
+                            component="img"
+                            src={`${import.meta.env.BASE_URL}${promoImg}`}
+                            alt={label}
+                            sx={{
+                              width: "100%", height: "100%", objectFit: "cover",
+                              display: "block",
+                            }}
+                          />
+                          <Box sx={{
+                            position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+                            background: "linear-gradient(180deg, rgba(10,25,41,0.2) 0%, rgba(10,25,41,0.85) 100%)",
+                            display: "flex", flexDirection: "column", justifyContent: "flex-end",
+                            p: 2,
+                          }}>
+                            <Typography sx={{
+                              color: isSunrise ? "#ffb74d" : "#ff7043",
+                              fontWeight: 700, fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: 1,
+                              mb: 0.5,
+                            }}>
+                              {label}
+                            </Typography>
+                            <Typography sx={{ color: "#ffffff", fontWeight: 600, fontSize: "0.88rem", lineHeight: 1.4, mb: 1.5 }}>
+                              {t(
+                                "Trouve les plus beaux spots pour admirer le lever et le coucher du soleil en Polynésie.",
+                                "Find the most beautiful spots to enjoy sunrise and sunset in French Polynesia."
+                              )}
+                            </Typography>
+                            <Button
+                              component="a"
+                              href={SUNSET_PARADISE_URL}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              size="small"
+                              startIcon={<ExploreIcon sx={{ fontSize: 16 }} />}
+                              sx={{
+                                alignSelf: "flex-start",
+                                borderRadius: 2, px: 2.5, py: 1, fontWeight: 600, fontSize: "0.78rem", textTransform: "none",
+                                background: "linear-gradient(135deg, #f57c00, #ffa726)",
+                                color: "#ffffff",
+                                boxShadow: "0 4px 12px rgba(245,124,0,0.3)",
+                                "&:hover": {
+                                  background: "linear-gradient(135deg, #ef6c00, #fb8c00)",
+                                  transform: "translateY(-1px)",
+                                },
+                              }}
+                            >
+                              {t("Découvrir Sunset Paradise Tahiti", "Discover Sunset Paradise Tahiti")}
+                            </Button>
+                          </Box>
+                        </Box>
+                      </Box>
+                    );
+                  }
+
+                  // Reservation slot
+                  if (slot.type === "reservation") {
+                    return (
+                      <Box key={sIdx} sx={slotBoxSx}>
+                        <Typography sx={{ fontSize: "1.3rem" }}>{emoji}</Typography>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography sx={{ color: "#ffb74d", fontWeight: 600, fontSize: "0.85rem" }}>
+                            {slot.label}
+                          </Typography>
+                          {slot.time && (
+                            <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>
+                              {slot.time}
+                            </Typography>
+                          )}
+                          {slot.location && (
+                            <Typography sx={{ color: "rgba(255,255,255,0.4)", fontSize: "0.78rem", display: "flex", alignItems: "center", gap: 0.5 }}>
+                              <PlaceIcon sx={{ fontSize: 13 }} /> {slot.location}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    );
+                  }
+
+                  // Visit or restaurant slot (has a POI)
+                  if (slot.poi) {
+                    return (
+                      <ItinerarySlot
+                        key={sIdx}
+                        slot={slot}
+                        lang={lang}
+                        periodLabel={periodLabel}
+                        emoji={emoji}
+                        t={t}
+                      />
+                    );
+                  }
+
+                  return null;
+                })}
+              </Card>
+            ))}
+          </Box>
+        </Fade>
+
+        {/* Review answers + regenerate */}
+        <Fade in timeout={900}>
+          <Box sx={{ mt: 3, display: "flex", flexDirection: "column", gap: 1.5, maxWidth: 480 }}>
+            <Button
+              onClick={() => setShowItinerary(false)}
+              startIcon={<ArrowBackIcon />}
+              sx={{
+                borderRadius: 3, px: 3, py: 1.25, fontWeight: 600, fontSize: "0.85rem", textTransform: "none",
+                background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.6)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                "&:hover": { background: "rgba(255,255,255,0.1)" },
+              }}
+            >
+              {t("Revoir mes réponses", "Review my answers")}
+            </Button>
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <Button
+                onClick={handleGenerateItinerary}
+                disabled={generating}
+                startIcon={generating ? <CircularProgress size={16} sx={{ color: "#64b5f6" }} /> : <ExploreIcon />}
+                sx={{
+                  flex: 1, borderRadius: 3, px: 3, py: 1.25, fontWeight: 600, fontSize: "0.85rem", textTransform: "none",
+                  background: "rgba(100,181,246,0.12)", color: "#64b5f6",
+                  border: "1px solid rgba(100,181,246,0.25)",
+                  "&:hover": { background: "rgba(100,181,246,0.18)" },
+                }}
+              >
+                {generating ? t("Génération…", "Generating…") : t("Régénérer", "Regenerate")}
+              </Button>
+              <Button
+                onClick={resetAll}
+                sx={{
+                  borderRadius: 3, px: 3, py: 1.25, fontWeight: 600, fontSize: "0.85rem", textTransform: "none",
+                  background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.6)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  "&:hover": { background: "rgba(255,255,255,0.1)" },
+                }}
+              >
+                {t("Recommencer", "Start over")}
+              </Button>
+            </Box>
+          </Box>
+        </Fade>
+      </>
+    );
+  };
+
   const stepContent = [
     renderIslandStep,
     renderDurationStep,
@@ -1090,8 +1476,71 @@ export default function MonSejourPage() {
     renderSummaryStep,
   ];
 
+  // ---- Component for a POI slot (visit or restaurant) ----
+  const ItinerarySlot = ({ slot, lang, periodLabel, emoji, t }) => {
+    const { imageUrl } = usePoiImage(slot.poi);
+    const navUrl = getNavigationUrl(slot.poi);
+    const isRestaurant = slot.type === "restaurant";
+    const titleText = slot.poi.title?.[lang] || slot.poi.title?.fr || slot.poi.title?.en || "";
+
+    return (
+      <Box sx={{
+        display: "flex", gap: 1.5, px: 2, py: 1.5,
+        borderBottom: "1px solid rgba(255,255,255,0.04)",
+        "&:last-child": { borderBottom: "none" },
+      }}>
+        <Typography sx={{ fontSize: "1.3rem", flexShrink: 0 }}>{emoji}</Typography>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          {slot.period && (
+            <Typography sx={{
+              color: isRestaurant ? "#81c784" : "#64b5f6",
+              fontSize: "0.72rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5,
+            }}>
+              {periodLabel(slot.period)}
+            </Typography>
+          )}
+          <Typography sx={{ color: "#ffffff", fontWeight: 600, fontSize: "0.85rem", mt: 0.25 }}>
+            {titleText}
+          </Typography>
+          {imageUrl && (
+            <Box
+              component="img"
+              src={imageUrl}
+              alt={titleText}
+              sx={{
+                width: "100%", maxHeight: 120, objectFit: "cover", borderRadius: 1.5, mt: 1,
+              }}
+            />
+          )}
+          {navUrl && (
+            <Button
+              component="a"
+              href={navUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              size="small"
+              startIcon={<DirectionsIcon sx={{ fontSize: 16 }} />}
+              sx={{
+                mt: 1, textTransform: "none", fontSize: "0.78rem", fontWeight: 600,
+                color: "#64b5f6", borderColor: "rgba(100,181,246,0.4)",
+                "&:hover": { background: "rgba(100,181,246,0.08)", borderColor: "#64b5f6" },
+              }}
+              variant="outlined"
+            >
+              {t("Itinéraire", "Directions")}
+            </Button>
+          )}
+        </Box>
+      </Box>
+    );
+  };
+
   return (
     <Box sx={pageBackground}>
+      {showItinerary && itinerary ? (
+        renderItineraryStep()
+      ) : (
+        <>
       {renderProgress()}
       {stepContent[step]()}
       {step < TOTAL_STEPS - 1 && (
@@ -1112,6 +1561,72 @@ export default function MonSejourPage() {
           </Box>
         </Fade>
       )}
+        </>
+      )}
+      {restoredTrip && !showItinerary && (
+        <Fade in timeout={500}>
+          <Box sx={{
+            mt: 3, maxWidth: 480, p: 2, borderRadius: 3,
+            background: "rgba(76,175,80,0.08)", border: "1px solid rgba(76,175,80,0.2)",
+            display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2,
+          }}>
+            <Typography sx={{ color: "rgba(255,255,255,0.7)", fontSize: "0.82rem" }}>
+              {t("Séjour restauré depuis ta dernière visite.", "Trip restored from your last visit.")}
+            </Typography>
+            <Button
+              size="small"
+              onClick={() => setRestoredTrip(false)}
+              sx={{ color: "rgba(255,255,255,0.5)", minWidth: "auto", fontSize: "0.75rem", textTransform: "none" }}
+            >
+              ✕
+            </Button>
+          </Box>
+        </Fade>
+      )}
+      <Modal
+        open={resetConfirmOpen}
+        onClose={() => setResetConfirmOpen(false)}
+        sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+      >
+        <Box sx={{
+          maxWidth: 380, p: 4, borderRadius: 4, textAlign: "center",
+          background: "linear-gradient(180deg, #0d2845, #103a5c)",
+          border: "1px solid rgba(255,255,255,0.12)",
+        }}>
+          <Typography sx={{ color: "#ffffff", fontWeight: 600, fontSize: "1.1rem", mb: 1.5 }}>
+            {t("Supprimer ce séjour ?", "Delete this trip?")}
+          </Typography>
+          <Typography sx={{ color: "rgba(255,255,255,0.6)", fontSize: "0.85rem", lineHeight: 1.6, mb: 3 }}>
+            {t(
+              "Toutes tes réponses et ton programme seront effacés définitivement.",
+              "All your answers and itinerary will be permanently deleted."
+            )}
+          </Typography>
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <Button
+              fullWidth
+              onClick={() => setResetConfirmOpen(false)}
+              sx={{
+                borderRadius: 3, py: 1.25, fontWeight: 600, fontSize: "0.85rem", textTransform: "none",
+                background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.7)",
+                border: "1px solid rgba(255,255,255,0.1)",
+              }}
+            >
+              {t("Annuler", "Cancel")}
+            </Button>
+            <Button
+              fullWidth
+              onClick={doReset}
+              sx={{
+                borderRadius: 3, py: 1.25, fontWeight: 600, fontSize: "0.85rem", textTransform: "none",
+                background: "linear-gradient(135deg, #d32f2f, #ef5350)", color: "#ffffff",
+              }}
+            >
+              {t("Supprimer", "Delete")}
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
       <BottomNav />
     </Box>
   );
